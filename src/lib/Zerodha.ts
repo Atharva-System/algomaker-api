@@ -1,12 +1,30 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as debug from 'debug';
 import * as fs from 'fs';
-import * as request from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import * as qs from 'querystring';
 import { CookieJar, FileCookieStore } from 'tough-cookie';
 import authenticator from 'authenticator';
+import { response } from 'express';
+import { option } from 'yargs';
 
 const logger = debug('trader:zerodha');
+
+interface Headers {
+  [key: string]: string;
+}
+
+interface RequestOptions {
+  method: string;
+  url: string;
+  headers: Headers;
+  body?: any;
+  form?: any;
+  json?: boolean;
+  gzip?: boolean;
+  jar?: any;
+}
 
 class Zerodha {
   public kite: any;
@@ -16,7 +34,7 @@ class Zerodha {
   public config: any;
   public lastLogin: any;
 
-  constructor(account) {
+  constructor(account: any) {
     this.kite = {
       version: '2.8.0',
     };
@@ -30,7 +48,7 @@ class Zerodha {
     }
   }
 
-  loadConfig(account) {
+  loadConfig(account: { credentials: any; config: any; lastLogin: any; }) {
     this.credentials = account.credentials;
     this.config = account.config;
     this.lastLogin = account.lastLogin;
@@ -87,17 +105,15 @@ class Zerodha {
           origin: 'https://kite.zerodha.com',
         };
 
-        const options = {
+        const options: RequestOptions = {
           method: 'GET',
           url: 'https://kite.zerodha.com/',
           headers: headers,
           jar: this.cookie_jar,
         };
-
-        request(options, function (error, response, body) {
-          if (error) throw new Error(error);
+        axios(options).then((response: AxiosResponse) => {
           // logger(response.headers["set-cookie"])
-          const options = {
+          const options: RequestOptions = {
             method: 'POST',
             url: 'https://kite.zerodha.com/api/login',
             headers: headers,
@@ -109,10 +125,7 @@ class Zerodha {
             gzip: true,
             jar: this.cookie_jar,
           };
-
-          request(options, function (error, response, body) {
-            if (error) reject(error);
-            // logger(response.headers["set-cookie"])
+          axios(options).then((body: { data: { request_id: any; }; }) => {
             if (this.credentials.authkey) {
               const formattedKey = authenticator.generateToken(
                 String(this.credentials.authkey).toLowerCase(),
@@ -129,9 +142,8 @@ class Zerodha {
                   skip_session: '',
                 });
                 delete options.form;
-
-                request(options, function (error, response, body) {
-                  if (error) reject(error);
+                axios(options).then((response: AxiosResponse) => {
+                  const body = response.data;
                   if (body.status && body.status == 'success') {
                     this.config = body;
                     resolve(true);
@@ -142,7 +154,7 @@ class Zerodha {
                     );
                     resolve(false);
                   }
-                });
+                })
               } else {
                 console.log(this.credentials.user_id + ' login error', body);
                 resolve(false);
@@ -150,8 +162,8 @@ class Zerodha {
             } else {
               resolve(false);
             }
-          });
-        });
+          }).catch((error) => { throw new Error(error) })
+        })
       });
     }
   }
@@ -169,14 +181,13 @@ class Zerodha {
         jar: this.cookie_jar,
         json: true,
       };
-      request(options, function (error, response, body) {
-        if (error) reject(error);
-        else resolve(body);
-      });
+      axios(options).then((body: AxiosResponse) => {
+        resolve(body)
+      }).catch((error) => reject(error))
     });
   }
 
-  historyData(instrument, type = 'minute', from, to) {
+  historyData(instrument: string, type = 'minute', from: any, to: any) {
     return new Promise((resolve, reject) => {
       if (typeof instrument == 'undefined')
         throw new Error('undefined instrument');
@@ -210,8 +221,7 @@ class Zerodha {
         json: true,
       };
 
-      request(options, function (error, response, body) {
-        if (error) reject(error);
+      axios(options).then((body: { data: { candles: any[]; }; }) => {
         logger(body);
         if (
           typeof body == 'undefined' ||
@@ -225,7 +235,7 @@ class Zerodha {
             body.data.candles.length > 0 &&
             body.data.candles[0].length == 7
           ) {
-            candles = body.data.candles.map((c) => {
+            candles = body.data.candles.map((c: any[]) => {
               return {
                 ts: c[0],
                 open: c[1],
@@ -237,7 +247,7 @@ class Zerodha {
               };
             });
           } else {
-            candles = body.data.candles.map((c) => {
+            candles = body.data.candles.map((c: any[]) => {
               return {
                 ts: c[0],
                 open: c[1],
@@ -251,18 +261,14 @@ class Zerodha {
           logger(candles.length);
           resolve(candles);
         }
-      });
+      }).catch((error) => { reject(error) })
     });
   }
 
   randomString() {
-    for (
-      var e = '',
-      t = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
-      a = 0;
-      a < 32;
-      a++
-    )
+    let e = '';
+    const t = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let a = 0; a < 32; a++)
       e += t.charAt(Math.floor(Math.random() * t.length));
     return e;
   }
@@ -278,7 +284,7 @@ class Zerodha {
    * @param {Number} options.trail_sl
    * @returns {Object} response
    */
-  async order(options) {
+  async order(options: { exchange: any; tradingsymbol: any; transaction_type: any; quantity: any; price: any; trigger_price: any; squareoff: any; stoploss: any; trailing_stoploss: any; }) {
     return new Promise((resolve, reject) => {
       const req_options = {
         method: 'POST',
@@ -313,10 +319,9 @@ class Zerodha {
 
       // console.log(req_options);
 
-      request(req_options, function (error, response, body) {
-        if (error) reject(error);
+      axios(req_options).then((body) => {
         resolve(body);
-      });
+      }).catch((error) => { reject(error) })
     });
   }
 
@@ -331,7 +336,7 @@ class Zerodha {
    * @param {Number} options.trail_sl
    * @returns {Object} response
    */
-  async orderCNC(options, type = 'regular') {
+  async orderCNC(options: { exchange: any; symbol: any; type: any; order_type: any; quantity: any; price: any; trigger_price: any; }, type = 'regular') {
     // console.log(options, type);
     return new Promise((resolve, reject) => {
       const req_options = {
@@ -366,21 +371,28 @@ class Zerodha {
         },
       };
 
-      // console.log(req_options);
-      request(req_options, function (error, response, body) {
-        console.log(body);
-        if (!error && response.statusCode == 200) {
-          resolve({
-            status: true,
-            resp: body,
-          });
-        } else {
+      axios(req_options)
+        .then((response) => {
+          console.log(response.data);
+          if (response.status === 200) {
+            resolve({
+              status: true,
+              resp: response.data,
+            });
+          } else {
+            resolve({
+              status: false,
+              error: response.data,
+            });
+          }
+        })
+        .catch((error) => {
+          console.error(error);
           resolve({
             status: false,
-            error: body,
+            error: error.message,
           });
-        }
-      });
+        });
     });
   }
 
@@ -394,7 +406,7 @@ class Zerodha {
    * @param {Number} options.trigger_price
    * @returns {Object} response
    */
-  async coverOrder(options) {
+  async coverOrder(options: { exchange: any; tradingsymbol: any; transaction_type: any; price: number; quantity: any; trigger_price: any; }) {
     return new Promise((resolve, reject) => {
       const req_options = {
         method: 'POST',
@@ -428,14 +440,13 @@ class Zerodha {
         json: true,
       };
 
-      request(req_options, function (error, response, body) {
-        if (error) resolve(error);
-        else resolve(body);
-      });
+      axios(req_options).then((body: AxiosResponse) => {
+        resolve(body)
+      }).catch((error) => { resolve(error) })
     });
   }
 
-  async exitBO_Order(orderId, parent_order_id) {
+  async exitBO_Order(orderId: string, parent_order_id: string) {
     return new Promise((resolve, reject) => {
       const headers = {
         'x-kite-version': this.kite.version,
@@ -457,23 +468,27 @@ class Zerodha {
         jar: this.cookie_jar,
       };
 
-      function callback(error, response, body?) {
+      function callback(error: any, response: { statusCode: number; }, body?: any) {
         if (!error && response.statusCode == 200) {
           resolve({
             status: true,
           });
-        } else
+        } else {
           resolve({
             status: false,
             error: body,
           });
+        }
       }
 
-      request(options, callback);
+      axios(options, (error, response, body) => {
+        callback(error, response, body);
+      });
+
     });
   }
 
-  async modifyBO_Order(order, trigger_price) {
+  async modifyBO_Order(order: { order_id: string; exchange: any; tradingsymbol: any; transaction_type: any; order_type: any; quantity: any; price: any; validity: any; variety: any; placed_by: any; }, trigger_price: any) {
     return new Promise((resolve, reject) => {
       const headers = {
         'content-type': 'application/x-www-form-urlencoded',
@@ -509,7 +524,7 @@ class Zerodha {
         },
       };
 
-      function callback(error, response, body?) {
+      function callback(error: any, response: { statusCode: number; }, body?: any) {
         if (!error && response.statusCode == 200) {
           resolve({
             status: true,
@@ -521,7 +536,7 @@ class Zerodha {
           });
       }
 
-      request(options, callback);
+      axios(options, callback);
     });
   }
   /**
@@ -535,7 +550,7 @@ class Zerodha {
    * @param {Number} options.trail_sl
    * @returns {Object} response
    */
-  async orderRegular(options, type = 'regular') {
+  async orderRegular(options: { symbol: any; type: any; order_type: any; quantity: any; price: any; trigger_price: any; }, type = 'regular') {
     // console.log(options, type);
     return new Promise((resolve, reject) => {
       const req_options = {
@@ -570,7 +585,7 @@ class Zerodha {
       };
 
       // console.log(req_options);
-      request(req_options, function (error, response, body) {
+      axios(req_options, function (error: any, response: { statusCode: number; }, body: any) {
         if (!error && response.statusCode == 200) {
           resolve({
             status: true,
@@ -585,7 +600,7 @@ class Zerodha {
     });
   }
 
-  async orderFNO(options) {
+  async orderFNO(options: { tradingsymbol: any; transaction_type: any; order_type: any; quantity: any; price: any; trigger_price: any; tag: any; }) {
     // console.log(options, type);
     return new Promise((resolve, reject) => {
       const req_options = {
@@ -620,14 +635,14 @@ class Zerodha {
       };
 
       if (options.tag) req_options.form.tag = options.tag;
-      request(req_options, function (error, response, body) {
+      axios(req_options, function (error: any, response: any, body: unknown) {
         if (body) resolve(body);
         else resolve(false);
       });
     });
   }
 
-  async orderFNONrml(options) {
+  async orderFNONrml(options: { tradingsymbol: any; transaction_type: any; order_type: any; quantity: any; price: any; trigger_price: any; tag: any; }) {
     // console.log(options, type);
     return new Promise((resolve, reject) => {
       const req_options = {
@@ -662,14 +677,14 @@ class Zerodha {
       };
 
       if (options.tag) req_options.form.tag = options.tag;
-      request(req_options, function (error, response, body) {
+      axios(req_options, function (error: any, response: any, body: unknown) {
         if (body) resolve(body);
         else resolve(false);
       });
     });
   }
 
-  async exitRegularOrder(order_id) {
+  async exitRegularOrder(order_id: string) {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'DELETE',
@@ -678,14 +693,14 @@ class Zerodha {
           Authorization: 'enctoken ' + this.getAuthorization(),
         },
       };
-      request(options, function (error, response) {
+      axios(options, function (error: any, response: { body: unknown; }) {
         if (error) resolve(false);
         resolve(response.body);
       });
     });
   }
 
-  async exitCoverOrder(order_id, parent_order_id) {
+  async exitCoverOrder(order_id: string, parent_order_id: string) {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'DELETE',
@@ -698,14 +713,14 @@ class Zerodha {
           Authorization: 'enctoken ' + this.getAuthorization(),
         },
       };
-      request(options, function (error, response) {
+      axios(options, function (error: any, response: { body: unknown; }) {
         if (error) resolve(false);
         resolve(response.body);
       });
     });
   }
 
-  async modifyRegularOrder(order_id, price, trigger_price) {
+  async modifyRegularOrder(order_id: string, price: any, trigger_price: any) {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'PUT',
@@ -720,14 +735,14 @@ class Zerodha {
         },
         json: true,
       };
-      request(options, function (error, response) {
+      axios(options, function (error: any, response: { body: unknown; }) {
         if (error) resolve(false);
         resolve(response.body);
       });
     });
   }
 
-  async modifyCoverSL(order_id, parent_order_id, trigger_price) {
+  async modifyCoverSL(order_id: string, parent_order_id: string, trigger_price: any) {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'PUT',
@@ -746,14 +761,14 @@ class Zerodha {
         },
         json: true,
       };
-      request(options, function (error, response) {
+      axios(options, function (error: any, response: { body: unknown; }) {
         if (error) resolve(false);
         resolve(response.body);
       });
     });
   }
 
-  async fnoStrategyMargin(options) {
+  async fnoStrategyMargin(options: any[]) {
     // console.log(options, type);
     return new Promise((resolve, reject) => {
       const req_options = {
@@ -771,7 +786,7 @@ class Zerodha {
         body: [],
       };
 
-      req_options.body = options.map((order) => {
+      req_options.body = options.map((order: { tradingsymbol: any; transaction_type: any; order_type: any; quantity: any; price: any; trigger_price: any; }) => {
         return {
           exchange: 'NFO',
           tradingsymbol: order.tradingsymbol,
@@ -787,7 +802,7 @@ class Zerodha {
         };
       });
 
-      request(req_options, function (error, response, body) {
+      axios(req_options, function (error: any, response: { statusCode: number; }, body: { data: unknown; }) {
         if (!error && response.statusCode == 200) {
           resolve(body.data);
         } else resolve(false);
@@ -795,7 +810,7 @@ class Zerodha {
     });
   }
 
-  async getQoute(instrument) {
+  async getQoute(instrument: string | number) {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
@@ -812,7 +827,7 @@ class Zerodha {
         json: true,
       };
 
-      request(options, function (error, response, body) {
+      axios(options, function (error: any, response: any, body: unknown) {
         if (error) reject(error);
         try {
           body = body.data[instrument];
@@ -825,7 +840,7 @@ class Zerodha {
     });
   }
 
-  async getMultiOHLC(instruments) {
+  async getMultiOHLC(instruments: any[]) {
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
@@ -842,7 +857,7 @@ class Zerodha {
       if (instruments.length > 0) {
         options.url += '?i=' + instruments.join('&i=');
         // console.log(options);
-        request(options, function (error, response, body) {
+        axios(options, function (error: any, response: any, body: { status: string; data: unknown; }) {
           // console.log(body);
           if (error) resolve(false);
           else if (body.status == 'success') resolve(body.data);
@@ -866,7 +881,7 @@ class Zerodha {
         json: true,
       };
 
-      request(options, function (error, response, body) {
+      axios(options, function (error: any, response: any, body: unknown) {
         if (error) reject(error);
         try {
           body = body.data;
@@ -899,7 +914,7 @@ class Zerodha {
         json: true,
       };
 
-      request(options, function (error, response, body) {
+      axios(options, function (error: any, response: any, body: { data: unknown; }) {
         if (!error && body) {
           resolve(body.data);
         } else resolve(false);
@@ -921,7 +936,7 @@ class Zerodha {
         json: true,
       };
 
-      request(options, function (error, response, body) {
+      axios(options, function (error: any, response: any, body: unknown) {
         if (error) reject(error);
         try {
           body = body.data;
@@ -952,7 +967,7 @@ class Zerodha {
         gzip: true,
       };
 
-      request(options, function (error, response, body) {
+      axios(options, function (error: any, response: any, body: any) {
         if (error) reject(error);
         try {
           resolve(true);
@@ -978,17 +993,20 @@ class Zerodha {
         json: true,
       };
 
-      request(options, function (error, response, body) {
-        if (error) reject(error);
-        try {
-          if (body.status == 'error') {
-            resolve(false);
-          } else resolve(true);
-        } catch (err) {
-          console.log(err);
-          resolve(false);
-        }
-      });
+      axios(options)
+        .then((response) => {
+          if (response.data && response.data.status === 'error') {
+            return Promise.reject('Error');
+          } else {
+            return Promise.resolve('Success');
+          }
+        })
+        .then((result) => {
+          console.log(result);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     });
   }
 
@@ -1011,42 +1029,42 @@ class Zerodha {
     }
   }
 
-  intradayBrokerageCalc(buy_price, sell_price, qty) {
+  intradayBrokerageCalc(buy_price: number, sell_price: number, qty: number) {
     const bp = buy_price;
     const sp = sell_price;
     const bplan = 0.0003;
     const brokerage_buy =
       bp * qty * bplan > 20
         ? 20
-        : parseFloat(parseFloat(bp * qty * bplan).toFixed(2));
+        : +parseFloat((bp * qty * bplan).toString()).toFixed(2);
     const brokerage_sell =
       sp * qty * bplan > 20
         ? 20
-        : parseFloat(parseFloat(sp * qty * bplan).toFixed(2));
-    const brokerage = parseFloat(
-      parseFloat(brokerage_buy + brokerage_sell).toFixed(2),
-    );
-    const turnover = parseFloat(parseFloat((bp + sp) * qty).toFixed(2));
+        : +parseFloat((sp * qty * bplan).toString()).toFixed(2);
+    const brokerage = +parseFloat(
+      (brokerage_buy + brokerage_sell).toString(),
+    ).toFixed(2);
+    const turnover = +parseFloat(((bp + sp) * qty).toString()).toFixed(2);
     const stt_total = Math.round(
-      parseFloat(parseFloat(sp * qty * 0.00025).toFixed(2)),
+      +parseFloat((sp * qty * 0.00025).toString()).toFixed(2),
     );
-    const exc_trans_charge = parseFloat(
-      parseFloat(0.0000325 * turnover).toFixed(2),
-    );
+    const exc_trans_charge = +parseFloat(
+      (0.0000325 * turnover).toString(),
+    ).toFixed(2);
     const cc = 0;
-    const stax = parseFloat(
-      parseFloat(0.18 * (brokerage + exc_trans_charge)).toFixed(2),
-    );
-    const sebi_charges = parseFloat(parseFloat(turnover * 0.000001).toFixed(2));
+    const stax = +parseFloat(
+      (0.18 * (brokerage + exc_trans_charge)).toString(),
+    ).toFixed(2);
+    const sebi_charges = +parseFloat((turnover * 0.000001).toString()).toFixed(2);
     const total_tax = parseFloat(
       parseFloat(
-        brokerage + stt_total + exc_trans_charge + cc + stax + sebi_charges,
+        (brokerage + stt_total + exc_trans_charge + cc + stax + sebi_charges).toString(),
       ).toFixed(2),
     );
-    let breakeven = parseFloat(parseFloat(total_tax / qty).toFixed(2));
+    let breakeven = parseFloat(parseFloat((total_tax / qty).toString()).toFixed(2));
     breakeven = isNaN(breakeven) ? 0 : breakeven;
     const net_profit = parseFloat(
-      parseFloat((sp - bp) * qty - total_tax).toFixed(2),
+      parseFloat(((sp - bp) * qty - total_tax).toString()).toFixed(2),
     );
 
     return {
