@@ -5,8 +5,12 @@ import * as fs from 'fs';
 import axios, { AxiosResponse } from 'axios';
 import * as qs from 'querystring';
 import request from 'request';
+<<<<<<< HEAD
 import { CookieJar, Cookie } from 'tough-cookie'
 import { FileCookieStore } from 'tough-cookie-file-store';
+=======
+import FileCookieStore from 'tough-cookie-filestore'
+>>>>>>> 292c91229a64dc4bdb136dfd96521b2f3458325e
 import authenticator from 'authenticator';
 
 const logger = debug('trader:zerodha');
@@ -40,18 +44,35 @@ export default class Zerodha {
     };
     this.req_ua =
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36';
+<<<<<<< HEAD
     if (typeof account == 'object') this.loadConfig(account);
     else {
       this.cookie_jar = new CookieJar(new FileCookieStore(__dirname + '/../userdata/commmon.json'));
     }
+=======
+    // if (typeof account == 'object') this.loadConfig(account);
+    // else {
+    //   this.cookie_jar = request.jar(new FileCookieStore(__dirname + '/../userdata/commmon.json'));
+    // }
+    // console.log(account);
+    this.loadConfig(account);
+>>>>>>> 292c91229a64dc4bdb136dfd96521b2f3458325e
   }
 
   loadConfig(account: { credentials: any; config: any; lastLogin: any; }) {
     this.credentials = account.credentials;
     this.config = account.config;
     this.lastLogin = account.lastLogin;
+<<<<<<< HEAD
     if (!fs.existsSync('/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json')) {
       console.log('loadConfig , if calling');
+=======
+    if (
+      !fs.existsSync(
+        '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
+      )
+    ) {
+>>>>>>> 292c91229a64dc4bdb136dfd96521b2f3458325e
       fs.writeFileSync(
         '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
         '{}',
@@ -62,7 +83,7 @@ export default class Zerodha {
 
   loadCookie() {
     try {
-      this.cookie_jar = new CookieJar(
+      this.cookie_jar = request.jar(
         new FileCookieStore(
           '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
         ),
@@ -73,8 +94,88 @@ export default class Zerodha {
         '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
         '{}',
       );
+<<<<<<< HEAD
       // console.log(new FileCookieStore('/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json'))
       this.cookie_jar = new CookieJar(new FileCookieStore('/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json'));
+=======
+      this.cookie_jar = {
+          "zerodha.com": {
+            "/": {
+              "_cfuvid": {
+                "key": "_cfuvid",
+                "value": "nAXsUeqW8KjJhjgrggIDswn.yunybJVCc7NRD7gN2.s-1693565769375-0-604800000",
+                "domain": "zerodha.com",
+                "path": "/",
+                "secure": true,
+                "httpOnly": true,
+                "extensions": [
+                  "SameSite=None"
+                ],
+                "hostOnly": false,
+                "creation": "2023-09-01T03:46:03.871Z",
+                "lastAccessed": "2023-09-01T10:56:09.395Z"
+              },
+              "public_token": {
+                "key": "public_token",
+                "value": "ELko6urujW0zpGKTrUOpk3gPgU8N8qZw",
+                "domain": "zerodha.com",
+                "path": "/",
+                "secure": true,
+                "extensions": [
+                  "SameSite=None"
+                ],
+                "hostOnly": false,
+                "creation": "2023-09-01T03:46:13.010Z",
+                "lastAccessed": "2023-09-01T10:56:08.925Z"
+              }
+            }
+          },
+          "kite.zerodha.com": {
+            "/": {
+              "kf_session": {
+                "key": "kf_session",
+                "value": "vqV6xhTLIYWXFkOb46SP9yflo00g6l43",
+                "domain": "kite.zerodha.com",
+                "path": "/",
+                "secure": true,
+                "httpOnly": true,
+                "extensions": [
+                  "SameSite=None"
+                ],
+                "hostOnly": true,
+                "creation": "2023-09-01T03:46:05.294Z",
+                "lastAccessed": "2023-09-01T10:56:08.925Z"
+              },
+              "user_id": {
+                "key": "user_id",
+                "value": "JAH883",
+                "domain": "kite.zerodha.com",
+                "path": "/",
+                "secure": true,
+                "extensions": [
+                  "SameSite=None"
+                ],
+                "hostOnly": true,
+                "creation": "2023-09-01T03:46:13.009Z",
+                "lastAccessed": "2023-09-01T10:56:08.925Z"
+              },
+              "enctoken": {
+                "key": "enctoken",
+                "value": "YmjkalLTlkJdEdhaiJ/JsOP/OFfqImdKvSfKEEkDKFZnZYEBPebRD2+EloNMFsZgK2ZprAJKDHdNGZ1Ow9v9vUuqnYP6cEktcREsyTKmSBV6A4KL9u9SrA==",
+                "domain": "kite.zerodha.com",
+                "path": "/",
+                "secure": true,
+                "extensions": [
+                  "SameSite=None"
+                ],
+                "hostOnly": true,
+                "creation": "2023-09-01T03:46:13.012Z",
+                "lastAccessed": "2023-09-01T10:56:08.925Z"
+              }
+            }
+          }
+        };
+>>>>>>> 292c91229a64dc4bdb136dfd96521b2f3458325e
     }
   }
 
@@ -972,6 +1073,7 @@ export default class Zerodha {
   }
 
   async checkSession() {
+    console.log(this.getAuthorization());
     return new Promise((resolve, reject) => {
       const options = {
         method: 'GET',
@@ -1004,8 +1106,12 @@ export default class Zerodha {
 
   getAuthorization() {
     try {
+<<<<<<< HEAD
       console.log(this.cookie_jar)
       return this.cookie_jar.store.idx['kite.zerodha.com']['/']['enctoken'].value;
+=======
+      return this.cookie_jar['kite.zerodha.com']['/']['enctoken'].value;
+>>>>>>> 292c91229a64dc4bdb136dfd96521b2f3458325e
     } catch (e) {
       console.log('token not found', e);
       return false;
