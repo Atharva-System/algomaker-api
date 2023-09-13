@@ -3,11 +3,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import Zerodha from './lib/Zerodha';
-import kiteTicker from './lib/KiteTicker';
+// import kiteTicker from './lib/KiteTicker';
 
 let base_account: any;
 
-// let liveFeed: any, public_token: any;
+let public_token: any, liveFeed: any;
 // async function ticker(subs) {
 //   // console.log(public_token, '+++++++++++++')
 //   liveFeed = new kiteTicker({
@@ -23,13 +23,11 @@ let base_account: any;
 //   });
 // }
 
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(9000);
   base_account = {
-    "_id": {
-      "$oid": "648213302b148831b4d60cbf"
-    },
     "name": "JAH883",
     "username": "Zerodha",
     "credentials": {
@@ -186,15 +184,18 @@ async function bootstrap() {
     },
     "margin": 769730,
     "bkp_strategy": false,
-    "clientId": {
-      "$oid": "64915c558d529a064861214a"
-    },
-    "lastLogin": 1687486652941
+    "clientId": '64915c558d529a064861214a',
+    "lastLogin": 1687486652941,
+    id: '648213302b148831b4d60cbf'
+
   };
   console.log('bootstrap initiated')
   let zapi_base = new Zerodha(base_account)
+  zapi_base.loadConfig(base_account);
+  debugger
   await zapi_base.login();
-  // public_token = zapi_base.getAuthorization();
-  // setToken(public_token);
+  debugger
+  public_token = zapi_base.getAuthorization();
+  console.log(public_token);
 }
 bootstrap();
