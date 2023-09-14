@@ -165,7 +165,7 @@ import utils from '../lib/Utils';
  * #param {string} [params.root="wss://websocket.kite.trade/"] Kite websocket root.
  */
 const KiteTicker = function (params) {
-  const root = params.root || 'wss://ws.kite.trade/';
+  const root = params.root || 'wss://ws.zerodha.com/';
 
   let read_timeout = 5, // seconds
     reconnect_max_delay = 0,
@@ -261,22 +261,24 @@ const KiteTicker = function (params) {
     if (!ws) return;
     if (ws.readyState == ws.CONNECTING || ws.readyState == ws.OPEN) return;
 
-    const url =
+    let url =
       root +
       '?api_key=' +
       params.api_key +
-      '&access_token=' +
-      params.access_token +
+      '&enctoken=' +
+      encodeURIComponent(params.access_token) +
       '&uid=' +
-      new Date().getTime().toString();
+      new Date().getTime().toString() +
+      '&user_id=AB1212&user-agent=kite3-web&version=3';
+    console.log(url);
 
     ws = new WebSocket(url, {
       headers: {
         'X-Kite-Version': '3',
-        'User-Agent': utils.getUserAgent(),
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36',
       },
     });
-
     ws.binaryType = 'arraybuffer';
 
     ws.onopen = function () {
@@ -469,14 +471,8 @@ const KiteTicker = function (params) {
     max_delay = max_delay || defaultReconnectMaxDelay;
 
     // Set reconnect constraints
-    reconnect_max_tries =
-      max_retry >= maximumReconnectMaxRetries
-        ? maximumReconnectMaxRetries
-        : max_retry;
-    reconnect_max_delay =
-      max_delay <= minimumReconnectMaxDelay
-        ? minimumReconnectMaxDelay
-        : max_delay;
+    reconnect_max_tries = max_retry >= maximumReconnectMaxRetries ? maximumReconnectMaxRetries : max_retry;
+    reconnect_max_delay = max_delay <= minimumReconnectMaxDelay ? minimumReconnectMaxDelay : max_delay;
   }
 
   function triggerDisconnect(e?) {
@@ -571,8 +567,7 @@ const KiteTicker = function (params) {
 
         // Compute the change price using close price and last price
         if (tick.ohlc.close != 0) {
-          tick.change =
-            ((tick.last_price - tick.ohlc.close) * 100) / tick.ohlc.close;
+          tick.change = ((tick.last_price - tick.ohlc.close) * 100) / tick.ohlc.close;
         }
 
         // Full mode with timestamp in seconds
@@ -607,8 +602,7 @@ const KiteTicker = function (params) {
 
         // Compute the change price using close price and last price
         if (tick.ohlc.close != 0) {
-          tick.change =
-            ((tick.last_price - tick.ohlc.close) * 100) / tick.ohlc.close;
+          tick.change = ((tick.last_price - tick.ohlc.close) * 100) / tick.ohlc.close;
         }
 
         // Parse full mode
@@ -616,8 +610,7 @@ const KiteTicker = function (params) {
           // Parse last trade time
           tick.last_trade_time = null;
           const last_trade_time = buf2long(bin.slice(44, 48));
-          if (last_trade_time)
-            tick.last_trade_time = new Date(last_trade_time * 1000);
+          if (last_trade_time) tick.last_trade_time = new Date(last_trade_time * 1000);
 
           // Parse timestamp
           tick.exchange_timestamp = null;

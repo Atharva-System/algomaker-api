@@ -47,23 +47,17 @@ export default class Zerodha {
     };
     this.req_ua =
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36';
-    //'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36';
-    // 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0';
     if (typeof account == 'object') this.loadConfig(account);
     else {
-      console.log('else block');
       this.cookie_jar = new CookieJar(new FileCookieStore(__dirname + '/../userdata/commmon.json'), this.cookieOptions);
     }
   }
 
   loadConfig(account: { credentials: any; config: any; lastLogin: any; }) {
-    debugger
     this.credentials = account.credentials;
-    console.log(this.credentials);
     this.config = account.config;
     this.lastLogin = account.lastLogin;
     if (!fs.existsSync('/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json')) {
-      console.log('loadConfig , if calling');
       fs.writeFileSync(
         '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
         '{}',
@@ -75,7 +69,6 @@ export default class Zerodha {
 
   loadCookie() {
     try {
-      debugger
       this.cookie_jar = new CookieJar(
         new FileCookieStore(
           '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
@@ -83,7 +76,6 @@ export default class Zerodha {
       );
     } catch (err) {
       console.log(err);
-      debugger
       fs.writeFileSync(
         '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
         '{}',
@@ -93,19 +85,16 @@ export default class Zerodha {
   }
 
   async login(forceLogin = false) {
-    debugger
     const self = this;
     // this.loadCookie();
     const sessionActive = await self.checkSession();
     console.log(sessionActive, 'sessionActive');
     if (!forceLogin && sessionActive) {
-      debugger
       console.log('old logging in');
       return new Promise(async (resolve, reject) => {
         resolve(self.config);
       })
     } else {
-      debugger
       console.log(self.credentials.user_id + ' logging in');
       return new Promise((resolve, reject) => {
 
@@ -124,8 +113,6 @@ export default class Zerodha {
           headers: headers,
           jar: this.cookie_jar,
         };
-        console.log(options);
-        debugger
         axios(options).then((response: AxiosResponse) => {
           const options: RequestOptions = {
             method: 'POST',
@@ -139,10 +126,7 @@ export default class Zerodha {
             gzip: true,
             jar: this.cookie_jar,
           };
-          console.log(options);
-          debugger
           axios(options).then((body: AxiosResponse) => {
-            debugger
             if (this.credentials.authkey) {
               const formattedKey = authenticator.generateToken(String(this.credentials.authkey).toLowerCase());
               this.credentials.answer = formattedKey;
@@ -156,9 +140,7 @@ export default class Zerodha {
                   twofa_type: 'totp',
                   skip_session: '',
                 });
-                debugger
                 axios(options).then((response: AxiosResponse) => {
-                  debugger
                   const body = response.data;
                   if (body.status && body.status == 'success') {
                     this.config = body;
@@ -187,24 +169,24 @@ export default class Zerodha {
     }
   }
 
-  // async getConfig() {
-  //   return new Promise((resolve, reject) => {
-  //     const options = {
-  //       method: 'GET',
-  //       url: 'https://kite.zerodha.com/oms/user/profile/full',
-  //       headers: {
-  //         'user-agent': this.req_ua,
-  //         authorization: 'enctoken ' + this.getAuthorization(),
-  //       },
-  //       gzip: true,
-  //       jar: this.cookie_jar,
-  //       json: true,
-  //     };
-  //     axios(options).then((body: AxiosResponse) => {
-  //       resolve(body)
-  //     }).catch((error) => reject(error))
-  //   });
-  // }
+  async getConfig() {
+    return new Promise((resolve, reject) => {
+      const options = {
+        method: 'GET',
+        url: 'https://kite.zerodha.com/oms/user/profile/full',
+        headers: {
+          'user-agent': this.req_ua,
+          authorization: 'enctoken ' + this.getAuthorization(),
+        },
+        gzip: true,
+        jar: this.cookie_jar,
+        json: true,
+      };
+      axios(options).then((body: AxiosResponse) => {
+        resolve(body)
+      }).catch((error) => reject(error))
+    });
+  }
 
   // historyData(instrument: string, type = 'minute', from: any, to: any) {
   //   return new Promise((resolve, reject) => {
@@ -999,7 +981,6 @@ export default class Zerodha {
 
   async checkSession() {
     const self = this;
-    console.log(this.cookie_jar, 'from chek session');
     return new Promise(async (resolve, reject) => {
       try {
         const options = {
@@ -1012,20 +993,14 @@ export default class Zerodha {
           jar: self.temp_cookie_jar,
           json: true,
         }
-        console.log(options);
-        debugger
         const response = await axios(options);
-        console.log(response);
-        debugger
         if (response.data.status === 'error') {
-          console.log('reepsone if block')
-          debugger
+          // console.log('reepsone if block')
           resolve(false);
         } else {
           resolve(true);
         }
       } catch (error) {
-        debugger
         console.error(error);
         resolve(false);
       }
@@ -1034,8 +1009,6 @@ export default class Zerodha {
 
   getAuthorization() {
     try {
-      debugger
-      console.log(this.cookie_jar, 'getAuthorization')
       return this.cookie_jar.store.idx['kite.zerodha.com']['/']['enctoken'].value;
     } catch (e) {
       console.log('token not found', e);
