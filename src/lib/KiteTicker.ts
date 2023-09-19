@@ -2,8 +2,17 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
-import WebSocket from 'ws';
-import utils from '../lib/Utils';
+
+import * as WebSocket from 'ws';
+
+interface KiteTickerParams {
+  root?: string;
+  access_token: string;
+  api_key?: string;
+  reconnect?: any;
+  max_delay?: any;
+  max_retry?: any;
+}
 
 /**
  * The WebSocket client for connecting to Kite connect streaming quotes service.
@@ -164,7 +173,7 @@ import utils from '../lib/Utils';
  * @param {number} [params.max_delay=60] in seconds is the maximum delay after which subsequent re-connection interval will become constant. Defaults to 60s and minimum acceptable value is 5s.
  * #param {string} [params.root="wss://websocket.kite.trade/"] Kite websocket root.
  */
-const KiteTicker = function (params) {
+const KiteTicker = function (params: KiteTickerParams) {
   const root = params.root || 'wss://ws.zerodha.com/';
 
   let read_timeout = 5, // seconds
@@ -258,8 +267,7 @@ const KiteTicker = function (params) {
    */
   this.connect = function () {
     // Skip if its already connected
-    if (!ws) return;
-    if (ws.readyState == ws.CONNECTING || ws.readyState == ws.OPEN) return;
+    if (ws && (ws.readyState == ws.CONNECTING || ws.readyState == ws.OPEN)) return;
 
     let url =
       root +
@@ -269,16 +277,14 @@ const KiteTicker = function (params) {
       encodeURIComponent(params.access_token) +
       '&uid=' +
       new Date().getTime().toString() +
-      '&user_id=AB1212&user-agent=kite3-web&version=3';
-    console.log(url);
-
+      '&user_id=AB1212&user-agent=kite3-web&version=2.9.2';
     ws = new WebSocket(url, {
       headers: {
         'X-Kite-Version': '3',
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36',
       },
     });
+
     ws.binaryType = 'arraybuffer';
 
     ws.onopen = function () {
