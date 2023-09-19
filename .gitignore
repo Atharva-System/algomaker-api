@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+optionConfig_NIFTY.json
+optionConfig_BANKNIFTY.json
+
 # Logs
 logs
 *.log
