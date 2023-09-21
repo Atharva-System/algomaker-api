@@ -2,6 +2,7 @@
 import * as fs from 'fs';
 import axios, { AxiosResponse } from 'axios';
 const channelId = 0;
+import { NIFTYData } from 'src/interface/interface';
 
 async function getInstrumentDetails(underlyings: string = 'NIFTY'): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -48,11 +49,11 @@ async function getReq(url: string): Promise<any> {
   });
 }
 
-let futureSymbol: any,
-  futureToken: any,
-  futureLtp: any,
+let futureSymbol: string,
+  futureToken: number,
+  futureLtp: number,
   NIFTY: NIFTYData,
-  ivp: any,
+  ivp: number,
   ivTrend: string,
   nearestExpiry: string,
   nextWeekExpiry: any,
@@ -60,19 +61,6 @@ let futureSymbol: any,
   chain: any,
   futuresInstrument: any[],
   currentExpiryOptions = {};
-
-interface PerExpiryData {
-  prev_iv: string;
-  impliedVolatility: number;
-  max_pain: number | undefined;
-  expiry: string;
-  daysToExpiry: number;
-  iv_percentile: any;
-}
-
-interface NIFTYData {
-  per_expiry_data: Record<string, PerExpiryData>;
-}
 
 export async function download(underlying = 'BANKNIFTY') {
   return new Promise(async function (resolve, reject) {
@@ -93,40 +81,41 @@ export async function download(underlying = 'BANKNIFTY') {
       else {
         futuresInstrument = chain.data.filter((c: { segment: string }) => c.segment == 'NFO-FUT');
         const monthlyIdx = futuresInstrument.findIndex(
-          (c: { expiry: string }) => c.expiry.substr(0, 7) == nearestExpiry.substr(0, 7),
+          (c: { expiry: string }) => c.expiry.substr(0, 7) === nearestExpiry.substr(0, 7),
         );
         monthlyExpiry = futuresInstrument[monthlyIdx].expiry;
         futureToken = futuresInstrument[monthlyIdx].instrument_token;
         futureSymbol = futuresInstrument[monthlyIdx].tradingsymbol;
         futureLtp = futuresInstrument[monthlyIdx].last_price;
         // max_pain = parseInt(NIFTY.per_expiry_data[monthlyExpiry].max_pain);
+        console.log(chain.data);
         currentExpiryOptions = chain.data
-          .filter((c: { expiry: any }) => c.expiry == nearestExpiry)
+          .filter((c: { expiry: string }) => c.expiry === nearestExpiry)
           .reduce(
             (
               ob: {
                 [x: string]: {
-                  expiry: any;
-                  instrument_token: any;
-                  instrument_type: any;
-                  last_price: any;
-                  lot_size: any;
-                  name: any;
-                  segment: any;
-                  strike: any;
-                  tradingsymbol: any;
+                  expiry: string;
+                  instrument_token: number;
+                  instrument_type: string;
+                  last_price: number;
+                  lot_size: number;
+                  name: string;
+                  segment: string;
+                  strike: number;
+                  tradingsymbol: string;
                 };
               },
               elm: {
-                strike: any;
-                instrument_type: any;
-                expiry: any;
-                instrument_token: any;
-                last_price: any;
-                lot_size: any;
-                name: any;
-                segment: any;
-                tradingsymbol: any;
+                strike: number;
+                instrument_type: string;
+                expiry: string;
+                instrument_token: number;
+                last_price: number;
+                lot_size: number;
+                name: string;
+                segment: string;
+                tradingsymbol: string;
               },
             ) => {
               ob[elm.strike + elm.instrument_type] = {
@@ -146,32 +135,32 @@ export async function download(underlying = 'BANKNIFTY') {
           );
 
         const nextWeekExpiryOptions = chain.data
-          .filter((c: { expiry: any }) => c.expiry == nextWeekExpiry)
+          .filter((c: { expiry: string }) => c.expiry === nextWeekExpiry)
           .reduce(
             (
               ob: {
                 [x: string]: {
-                  expiry: any;
-                  instrument_token: any;
-                  instrument_type: any;
-                  last_price: any;
-                  lot_size: any;
-                  name: any;
-                  segment: any;
-                  strike: any;
-                  tradingsymbol: any;
+                  expiry: string;
+                  instrument_token: number;
+                  instrument_type: string;
+                  last_price: number;
+                  lot_size: number;
+                  name: string;
+                  segment: string;
+                  strike: number;
+                  tradingsymbol: string;
                 };
               },
               elm: {
-                strike: any;
-                instrument_type: any;
-                expiry: any;
-                instrument_token: any;
-                last_price: any;
-                lot_size: any;
-                name: any;
-                segment: any;
-                tradingsymbol: any;
+                strike: number;
+                instrument_type: string;
+                expiry: string;
+                instrument_token: number;
+                last_price: number;
+                lot_size: number;
+                name: string;
+                segment: string;
+                tradingsymbol: string;
               },
             ) => {
               ob[elm.strike + elm.instrument_type] = {
@@ -194,15 +183,15 @@ export async function download(underlying = 'BANKNIFTY') {
           .filter((c: { segment: string }) => c.segment == 'NFO-OPT')
           .map(
             (elm: {
-              expiry: any;
-              instrument_token: any;
-              instrument_type: any;
-              last_price: any;
-              lot_size: any;
-              name: any;
-              segment: any;
-              strike: any;
-              tradingsymbol: any;
+              expiry: string;
+              instrument_token: number;
+              instrument_type: string;
+              last_price: number;
+              lot_size: number;
+              name: string;
+              segment: string;
+              strike: number;
+              tradingsymbol: string;
             }) => ({
               expiry: elm.expiry,
               instrument_token: elm.instrument_token,

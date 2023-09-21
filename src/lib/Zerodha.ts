@@ -1,45 +1,31 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import * as debug from 'debug';
 import * as fs from 'fs';
 import * as qs from 'querystring';
-import { CookieJar, Cookie } from 'tough-cookie'
+import { CookieJar } from 'tough-cookie'
 import { FileCookieStore } from 'tough-cookie-file-store';
-// import FileCookieStore from 'tough-cookie-filestore';
 import { wrapper } from 'axios-cookiejar-support';
 import * as authenticator from 'authenticator';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-const logger = debug('trader:zerodha');
+import { BaseAccount, Headers, RequestOptions } from 'src/interface/interface';
+import { Credential } from 'src/interface/interface';
+
 wrapper(axios);
-interface Headers {
-  [key: string]: string;
-}
-interface RequestOptions {
-  method: string;
-  url: string;
-  headers: Headers;
-  body?: any;
-  data?: any;
-  form?: any;
-  json?: boolean;
-  gzip?: boolean;
-  jar?: any;
-}
 
 export default class Zerodha {
   [x: string]: any;
   public kite: any;
   public req_ua: any;
   public cookie_jar: any;
-  public credentials: any;
-  public config: any;
-  public lastLogin: any;
+  public credentials: Credential;
+  public config: object;
+  public lastLogin: string;
 
   cookieOptions = {
     looseMode: true,
   }
 
-  constructor(account: any) {
+  constructor(account: BaseAccount) {
     this.kite = {
       version: '2.8.0',
     };
@@ -51,7 +37,7 @@ export default class Zerodha {
     }
   }
 
-  loadConfig(account: { credentials: any; config: any; lastLogin: any; }) {
+  loadConfig(account: BaseAccount) {
     this.credentials = account.credentials;
     this.config = account.config;
     this.lastLogin = account.lastLogin;

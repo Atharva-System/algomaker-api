@@ -5,31 +5,24 @@ import Zerodha from './lib/Zerodha';
 import * as optionsConfig from './tools/optionInstruments';
 import { AccountModel } from './models/accounts/accounts.schema';
 import KiteTicker from './lib/KiteTicker';
+import { OptionData, BaseAccount, Tick } from './interface/interface';
 
-interface OptionData {
-  currentFuture?: {
-    token: string;
-  };
-  weeklyInstruments?: Record<string, any>;
-  nextWeekInstruments?: Record<string, any>;
-}
+let public_token: string, liveFeed: any, base_account: BaseAccount;
 
-let public_token: any, liveFeed: any, base_account: any;
 const masterId = process.env.masterId;
 const ticksCache = {};
 // const slippage = 0;
 const ticksCacheFrontend = {};
 const positionInstruments = {};
 
-async function ticker(underlying: string, subs: any[]) {
+async function ticker(underlying: string, subs: number[]) {
   liveFeed = new KiteTicker({
     access_token: public_token,
   });
   liveFeed.connect();
-  liveFeed.on('ticks', function (ticks: any) {
+  liveFeed.on('ticks', function (ticks: Tick[]) {
     //here we will get live ticks and it might be stop around 7:00 pm
     storeTicks(ticks);
-    // console.log('ticks', ticks);
     // console.log('ticks', underlying);
   });
 
@@ -47,7 +40,7 @@ async function ticker(underlying: string, subs: any[]) {
   });
 }
 
-function storeTicks(ticks) {
+function storeTicks(ticks: Tick[]) {
   const ticks2 = ticks.reduce(function (ob, el) {
     ob[el.instrument_token] = el;
     return ob;
@@ -84,7 +77,6 @@ async function bootstrap() {
   const b_currentExpiryOptions = optionData.nextWeekInstruments;
   const optionTokens = Object.values(currentExpiryOptions).map((c) => c.instrument_token);
   const b_optionTokens = Object.values(b_currentExpiryOptions).map((c) => c.instrument_token);
-
   ticker('BANKNIFTY', [256265, 260105, futureToken, ...optionTokens, ...b_optionTokens]);
 
   const n_optionData: OptionData = await optionsConfig.download('NIFTY');
