@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
-/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as debug from 'debug';
 import * as fs from 'fs';
@@ -15,7 +14,6 @@ wrapper(axios);
 interface Headers {
   [key: string]: string;
 }
-
 interface RequestOptions {
   method: string;
   url: string;
@@ -49,7 +47,7 @@ export default class Zerodha {
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36';
     if (typeof account == 'object') this.loadConfig(account);
     else {
-      this.cookie_jar = new CookieJar(new FileCookieStore(__dirname + '/../userdata/commmon.json'), this.cookieOptions);
+      this.cookie_jar = new CookieJar(new FileCookieStore(process.cwd() + '/userdata/commmon.json'), this.cookieOptions);
     }
   }
 
@@ -57,9 +55,9 @@ export default class Zerodha {
     this.credentials = account.credentials;
     this.config = account.config;
     this.lastLogin = account.lastLogin;
-    if (!fs.existsSync('/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json')) {
+    if (!fs.existsSync(process.cwd() + '/userdata/' + this.credentials.user_id + '.json')) {
       fs.writeFileSync(
-        '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
+        process.cwd() + '/userdata/' + this.credentials.user_id + '.json',
         '{}',
       );
     }
@@ -71,16 +69,16 @@ export default class Zerodha {
     try {
       this.cookie_jar = new CookieJar(
         new FileCookieStore(
-          '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
+          process.cwd() + '/userdata/' + this.credentials.user_id + '.json',
         ), this.cookieOptions
       );
     } catch (err) {
       console.log(err);
       fs.writeFileSync(
-        '/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json',
+        process.cwd() + '/userdata/' + this.credentials.user_id + '.json',
         '{}',
       );
-      this.cookie_jar = new CookieJar(new FileCookieStore('/home/dipen/projects/algo-maker-nest/src/userdata/' + this.credentials.user_id + '.json'), this.cookieOptions);
+      this.cookie_jar = new CookieJar(new FileCookieStore(process.cwd() + '/userdata/' + this.credentials.user_id + '.json'), this.cookieOptions);
     }
   }
 

@@ -85,7 +85,7 @@ export async function download(underlying = 'BANKNIFTY') {
       ivp = NIFTY.per_expiry_data[nearestExpiry].iv_percentile;
       ivTrend =
         parseFloat(NIFTY.per_expiry_data[nearestExpiry].prev_iv) <
-        NIFTY.per_expiry_data[nearestExpiry].impliedVolatility
+          NIFTY.per_expiry_data[nearestExpiry].impliedVolatility
           ? 'bullish'
           : 'bearish';
 
@@ -246,7 +246,7 @@ export async function download(underlying = 'BANKNIFTY') {
 export async function config(underlying = 'BANKNIFTY') {
   try {
     // console.log('no download');
-    const configFile = import('./../../optionConfig_' + underlying + '.json');
+    const configFile = import(process.cwd() + '/optionConfig_' + underlying + '.json');
     return configFile;
   } catch (err) {
     console.log('yes download');

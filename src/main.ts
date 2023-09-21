@@ -3,12 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import Zerodha from './lib/Zerodha';
 import * as optionsConfig from './tools/optionInstruments';
-import { KiteTicker } from 'kiteconnect';
-import { AccountSchema } from './models/accounts/accounts.schema';
-import * as mongoose from 'mongoose';
-
-// // we have to used following lib file for kite connect because these is modification in package file
-// import KiteTicker from './lib/KiteTicker';
+import { AccountModel } from './models/accounts/accounts.schema';
+import KiteTicker from './lib/KiteTicker';
 
 interface OptionData {
   currentFuture?: {
@@ -18,7 +14,6 @@ interface OptionData {
   nextWeekInstruments?: Record<string, any>;
 }
 
-const accountModel = mongoose.model('account', AccountSchema);
 let public_token: any, liveFeed: any, base_account: any;
 const masterId = process.env.masterId;
 const ticksCache = {};
@@ -66,17 +61,16 @@ function storeTicks(ticks) {
   // console.log(ticks3);
   //send all ticks3 to frontend , this is for nifty and banknifty ,this logic can be handle on frontend(temporary)
   Object.assign(positionInstruments, ticks3);
-  // const niftyTicker = positionInstruments['256265'];
-  // const bankniftyTicker = positionInstruments['260105'];
-  // console.log(`Nifty : ${niftyTicker} BankNifty : ${bankniftyTicker}`);
+  const niftyTicker = positionInstruments['256265'];
+  const bankniftyTicker = positionInstruments['260105'];
+  console.log(`Nifty : ${niftyTicker} BankNifty : ${bankniftyTicker}`);
 }
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(process.env.port);
 
-  base_account = await accountModel.findById(masterId);
-
+  base_account = await AccountModel.findById(masterId);
   console.log('bootstrap initiated');
   const zapi_base = new Zerodha(base_account);
   zapi_base.loadConfig(base_account);
@@ -101,5 +95,6 @@ async function bootstrap() {
   const n_nextWeekOptionTokens = Object.values(n_nextWeekExpiryOptions).map((c) => c.instrument_token);
 
   ticker('NIFTY', [n_futureToken, ...n_optionTokens, ...n_nextWeekOptionTokens]);
+
 }
 bootstrap();

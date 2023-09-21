@@ -1,6 +1,7 @@
 // src/schemas/user.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document ,model } from 'mongoose';
+import Zerodha from 'src/lib/Zerodha';
 
 @Schema({ collection: 'account' })
 export class Account extends Document {
@@ -134,6 +135,39 @@ export class Account extends Document {
 
   @Prop()
   lastLogin: string;
+
+
+  static async check(account: any): Promise<any> {
+    try {
+      const zapi_n = new Zerodha(account);
+      zapi_n.loadConfig(account);
+      const session = await zapi_n.login();
+      if (session) {
+        const profile = await zapi_n.getConfig();
+        const margins = await zapi_n.margins();
+
+        return {
+          status: true,
+          message: 'login success',
+          profile,
+          margins,
+        };
+      } else {
+        return {
+          status: false,
+          message: 'login failed',
+        };
+      }
+    } catch (err) {
+      return {
+        status: false,
+        message: 'something went wrong: ' + err.toString(),
+      };
+    }
+  }
+  
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);
+export const AccountModel = model<Account>('Account', AccountSchema);
+
