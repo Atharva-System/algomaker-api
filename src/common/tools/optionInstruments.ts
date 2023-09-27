@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 import axios, { AxiosResponse } from 'axios';
 const channelId = 0;
-import { NIFTYData } from 'src/interface/interface';
+import { NIFTYData } from '@src/common/interface/interface';
 
 async function getInstrumentDetails(underlyings: string = 'NIFTY'): Promise<any> {
   return new Promise((resolve, reject) => {

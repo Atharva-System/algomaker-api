@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export interface OptionData {
   currentFuture?: {
     token: string;
@@ -6,16 +8,26 @@ export interface OptionData {
   nextWeekInstruments?: Record<string, any>;
 }
 export interface Credential {
-user_id:string,
-password:string,
-authkey:string,
-answer:string,
+  user_id: string,
+  password: string,
+  authkey: string,
+  answer: string,
+}
+export interface Config {
+  data: {
+    user_name: string;
+  }
 }
 
 export interface BaseAccount {
+  id?: mongoose.Types.ObjectId;
+  name?: string;
+  username?: string;
+  margin: object;
   credentials: Credential;
-  config: object;
+  config: Config;
   lastLogin: string;
+  strategy: object;
 }
 
 export interface Headers {
@@ -50,6 +62,11 @@ export interface PerExpiryData {
 
 export interface NIFTYData {
   per_expiry_data: Record<string, PerExpiryData>;
+}
+
+export interface AccountPositions {
+  orders: any[];
+  accountId: any;
 }
 
 // interface OptionData {

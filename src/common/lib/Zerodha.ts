@@ -6,9 +6,10 @@ import { CookieJar } from 'tough-cookie'
 import { FileCookieStore } from 'tough-cookie-file-store';
 import { wrapper } from 'axios-cookiejar-support';
 import * as authenticator from 'authenticator';
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { BaseAccount, Headers, RequestOptions } from 'src/interface/interface';
-import { Credential } from 'src/interface/interface';
+import axios, { AxiosResponse } from 'axios';
+import { RequestOptions } from '@src/common/interface/interface';
+import { Credential } from '@src/common/interface/interface';
+import { Account } from '@src/modules/accounts/accounts.schema';
 
 wrapper(axios);
 
@@ -25,7 +26,7 @@ export default class Zerodha {
     looseMode: true,
   }
 
-  constructor(account: BaseAccount) {
+  constructor(account: Account) {
     this.kite = {
       version: '2.8.0',
     };
@@ -37,7 +38,7 @@ export default class Zerodha {
     }
   }
 
-  loadConfig(account: BaseAccount) {
+  loadConfig(account: Account) {
     this.credentials = account.credentials;
     this.config = account.config;
     this.lastLogin = account.lastLogin;
@@ -282,7 +283,7 @@ export default class Zerodha {
   //         'user-agent': this.req_ua,
   //         Authorization: 'enctoken ' + this.getAuthorization(),
   //       },
-  //       form: {
+  //       data: {
   //         exchange: options.exchange || 'NSE',
   //         tradingsymbol: options.tradingsymbol, // Symbol
   //         transaction_type: options.transaction_type, // BUY / SELL
@@ -336,7 +337,7 @@ export default class Zerodha {
   //       },
   //       jar: this.cookie_jar,
   //       json: true,
-  //       form: {
+  //       data: {
   //         exchange: options.exchange || 'NSE',
   //         tradingsymbol: options.symbol,
   //         transaction_type: options.type,
@@ -404,7 +405,7 @@ export default class Zerodha {
   //         'user-agent': this.req_ua,
   //         Authorization: 'enctoken ' + this.getAuthorization(),
   //       },
-  //       form: {
+  //       data: {
   //         exchange: options.exchange || 'NSE',
   //         tradingsymbol: options.tradingsymbol, // Symbol
   //         transaction_type: options.transaction_type, // BUY / SELL
@@ -488,7 +489,7 @@ export default class Zerodha {
   // //       method: 'PUT',
   // //       headers: headers,
   // //       jar: this.cookie_jar,
-  // //       form: {
+  // //       data: {
   // //         exchange: order.exchange,
   // //         tradingsymbol: order.tradingsymbol,
   // //         transaction_type: order.transaction_type,
@@ -550,7 +551,7 @@ export default class Zerodha {
   // //       },
   // //       jar: this.cookie_jar,
   // //       json: true,
-  // //       form: {
+  // //       data: {
   // //         exchange: 'NSE',
   // //         tradingsymbol: options.symbol,
   // //         transaction_type: options.type,
@@ -585,47 +586,47 @@ export default class Zerodha {
   // //   });
   // // }
 
-  // // async orderFNO(options: { tradingsymbol: any; transaction_type: any; order_type: any; quantity: any; price: any; trigger_price: any; tag: any; }) {
-  // //   // console.log(options, type);
-  // //   return new Promise((resolve, reject) => {
-  // //     const req_options = {
-  // //       method: 'POST',
-  // //       url: 'https://kite.zerodha.com/oms/orders/regular',
-  // //       headers: {
-  // //         'x-kite-version': this.kite.version,
-  // //         'x-kite-userid': this.credentials.user_id,
-  // //         'content-type': 'application/x-www-form-urlencoded',
-  // //         'user-agent': this.req_ua,
-  // //         Authorization: 'enctoken ' + this.getAuthorization(),
-  // //       },
-  // //       jar: this.cookie_jar,
-  // //       json: true,
-  // //       form: {
-  // //         exchange: 'NFO',
-  // //         tradingsymbol: options.tradingsymbol,
-  // //         transaction_type: options.transaction_type, // BUY / SELL
-  // //         order_type: options.order_type, // SL-M, MARKET
-  // //         quantity: options.quantity,
-  // //         price: options.price,
-  // //         product: 'MIS',
-  // //         validity: 'DAY',
-  // //         disclosed_quantity: '0',
-  // //         trigger_price: options.trigger_price || '0',
-  // //         squareoff: '0',
-  // //         stoploss: '0',
-  // //         trailing_stoploss: '0',
-  // //         variety: 'regular',
-  // //         user_id: this.credentials.user_id,
-  // //       },
-  // //     };
+  async orderFNO(options: { tradingsymbol: any; transaction_type: any; order_type: any; quantity: any; price: any; trigger_price: any; tag: any; }) {
+    // console.log(options, type);
+    return new Promise((resolve, reject) => {
+      const req_options = {
+        method: 'POST',
+        url: 'https://kite.zerodha.com/oms/orders/regular',
+        headers: {
+          'x-kite-version': this.kite.version,
+          'x-kite-userid': this.credentials.user_id,
+          'content-type': 'application/x-www-form-urlencoded',
+          'user-agent': this.req_ua,
+          Authorization: 'enctoken ' + this.getAuthorization(),
+        },
+        jar: this.cookie_jar,
+        json: true,
+        data: {
+          exchange: 'NFO',
+          tradingsymbol: options.tradingsymbol,
+          transaction_type: options.transaction_type, // BUY / SELL
+          order_type: options.order_type, // SL-M, MARKET
+          quantity: options.quantity,
+          price: options.price,
+          product: 'MIS',
+          validity: 'DAY',
+          disclosed_quantity: '0',
+          trigger_price: options.trigger_price || '0',
+          squareoff: '0',
+          stoploss: '0',
+          trailing_stoploss: '0',
+          variety: 'regular',
+          user_id: this.credentials.user_id,
+        },
+      };
 
-  // //     if (options.tag) req_options.form.tag = options.tag;
-  // //     axios(req_options, function (error: any, response: any, body: unknown) {
-  // //       if (body) resolve(body);
-  // //       else resolve(false);
-  // //     });
-  // //   });
-  // // }
+      if (options.tag) req_options.data['tag'] = options.tag;
+      axios(req_options).then((body: AxiosResponse) => {
+        if (body) resolve(body);
+        else resolve(false);
+      }).catch(((err) => console.log(err)));
+    });
+  }
 
   // // async orderFNONrml(options: { tradingsymbol: any; transaction_type: any; order_type: any; quantity: any; price: any; trigger_price: any; tag: any; }) {
   // //   // console.log(options, type);
@@ -642,7 +643,7 @@ export default class Zerodha {
   // //       },
   // //       jar: this.cookie_jar,
   // //       json: true,
-  // //       form: {
+  // //       data: {
   // //         exchange: 'NFO',
   // //         tradingsymbol: options.tradingsymbol,
   // //         transaction_type: options.transaction_type, // BUY / SELL
@@ -661,7 +662,7 @@ export default class Zerodha {
   // //       },
   // //     };
 
-  // //     if (options.tag) req_options.form.tag = options.tag;
+  // //     if (options.tag) req_options.data.tag = options.tag;
   // //     axios(req_options, function (error: any, response: any, body: unknown) {
   // //       if (body) resolve(body);
   // //       else resolve(false);
@@ -713,7 +714,7 @@ export default class Zerodha {
   // //       headers: {
   // //         Authorization: 'enctoken ' + this.getAuthorization(),
   // //       },
-  // //       form: {
+  // //       data: {
   // //         order_id: order_id,
   // //         price: price,
   // //         trigger_price: trigger_price,
@@ -739,7 +740,7 @@ export default class Zerodha {
   // //       headers: {
   // //         Authorization: 'enctoken ' + this.getAuthorization(),
   // //       },
-  // //       form: {
+  // //       data: {
   // //         order_id: order_id,
   // //         price: 0,
   // //         trigger_price: trigger_price,
@@ -852,97 +853,97 @@ export default class Zerodha {
   // //   });
   // // }
 
-  // async orders(): Promise<object> {
-  //   return new Promise((resolve, reject) => {
-  //     const options = {
-  //       method: 'GET',
-  //       url: 'https://kite.zerodha.com/oms/orders',
-  //       headers: {
-  //         Connection: 'keep-alive',
-  //         Authorization: 'enctoken ' + this.getAuthorization(),
-  //         'X-Kite-Version': '3',
-  //       },
-  //       gzip: true,
-  //       json: true,
-  //     };
-  //     axios(options)
-  //       .then(function (response) {
-  //         if (response.data) {
-  //           return response.data;
-  //         } else {
-  //           throw new Error('No data found in the response.');
-  //         }
-  //       })
-  //       .then(function (body: AxiosResponse) {
-  //         body = body.data;
-  //         // Perform any processing on the 'data' here
-  //         // For example, uncomment the code below to multiply 'quantity' by 10 and clear 'status_message' in each object
-  //         // data.forEach(p => {
-  //         //   p.quantity = p.quantity * 10;
-  //         //   p.status_message = '';
-  //         // });
-  //         resolve(body);
-  //       })
-  //       .catch(function (error) {
-  //         reject(error);
-  //         console.error(error);
-  //       });
-  //   });
-  // }
+  async orders(): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      const options = {
+        method: 'GET',
+        url: 'https://kite.zerodha.com/oms/orders',
+        headers: {
+          Connection: 'keep-alive',
+          Authorization: 'enctoken ' + this.getAuthorization(),
+          'X-Kite-Version': '3',
+        },
+        gzip: true,
+        json: true,
+      };
+      axios(options)
+        .then(function (response) {
+          if (response.data) {
+            return response.data;
+          } else {
+            throw new Error('No data found in the response.');
+          }
+        })
+        .then(function (body: any) {
+          body = body.data;
+          // Perform any processing on the 'data' here
+          // For example, uncomment the code below to multiply 'quantity' by 10 and clear 'status_message' in each object
+          // data.forEach(p => {
+          //   p.quantity = p.quantity * 10;
+          //   p.status_message = '';
+          // });
+          resolve(body);
+        })
+        .catch(function (error) {
+          reject(error);
+          console.error(error);
+        });
+    });
+  }
 
-  // async margins() {
-  //   return new Promise((resolve, reject) => {
-  //     const options = {
-  //       method: 'GET',
-  //       url: 'https://kite.zerodha.com/oms/user/margins',
-  //       headers: {
-  //         Connection: 'keep-alive',
-  //         Authorization: 'enctoken ' + this.getAuthorization(),
-  //         'X-Kite-Version': this.kite.version,
-  //       },
-  //       gzip: true,
-  //       json: true,
-  //     };
+  async margins() {
+    return new Promise((resolve, reject) => {
+      const options = {
+        method: 'GET',
+        url: 'https://kite.zerodha.com/oms/user/margins',
+        headers: {
+          Connection: 'keep-alive',
+          Authorization: 'enctoken ' + this.getAuthorization(),
+          'X-Kite-Version': this.kite.version,
+        },
+        gzip: true,
+        json: true,
+      };
 
-  //     axios(options)
-  //       .then(function (response) {
-  //         if (response.data) {
-  //           return response.data;
-  //         } else {
-  //           return false;
-  //         }
-  //       })
-  //   });
-  // }
+      axios(options)
+        .then(function (response) {
+          if (response.data) {
+            return response.data;
+          } else {
+            return false;
+          }
+        })
+    });
+  }
 
-  // async positions() {
-  //   return new Promise((resolve, reject) => {
-  //     const options = {
-  //       method: 'GET',
-  //       url: 'https://kite.zerodha.com/oms/portfolio/positions',
-  //       headers: {
-  //         Connection: 'keep-alive',
-  //         Authorization: 'enctoken ' + this.getAuthorization(),
-  //         'X-Kite-Version': this.kite.version,
-  //       },
-  //       gzip: true,
-  //       json: true,
-  //     };
-  //     axios(options).then((body: AxiosResponse) => {
-  //       body = body.data;
-  //       // here positions except from pappu/GL1992 are empty *************
-  //       // console.log(JSON.stringify(body));
+  async positions() {
+    return new Promise((resolve, reject) => {
+      const options = {
+        method: 'GET',
+        url: 'https://kite.zerodha.com/oms/portfolio/positions',
+        headers: {
+          Connection: 'keep-alive',
+          Authorization: 'enctoken ' + this.getAuthorization(),
+          'X-Kite-Version': this.kite.version,
+        },
+        gzip: true,
+        json: true,
+      };
+      axios(options).then((body: AxiosResponse) => {
+        body = body.data;
+        // here positions except from pappu/GL1992 are empty *************
+        // console.log(JSON.stringify(body));
 
-  //       // body.net.forEach(p => {
-  //       //   p.m2m = p.m2m * 10;
-  //       // });
-  //       resolve(body);
-  //     }).catch((err) => {
-  //       reject(err);
-  //       console.log(err);
-  //     })
-  //   });
-  // }
+        // body.net.forEach(p => {
+        //   p.m2m = p.m2m * 10;
+        // });
+        resolve(body);
+      }).catch((err) => {
+        reject(err);
+        console.log(err);
+      })
+    });
+  }
 
   // async checkHost() {
   //   return new Promise((resolve, reject) => {
@@ -999,6 +1000,7 @@ export default class Zerodha {
       return false;
     }
   }
+
   getPublicToken() {
     try {
       return this.cookie_jar._jar.store.idx['zerodha.com']['/']['public_token']
