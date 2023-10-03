@@ -88,7 +88,7 @@ export async function download(underlying = 'BANKNIFTY') {
         futureSymbol = futuresInstrument[monthlyIdx].tradingsymbol;
         futureLtp = futuresInstrument[monthlyIdx].last_price;
         // max_pain = parseInt(NIFTY.per_expiry_data[monthlyExpiry].max_pain);
-        console.log(chain.data);
+        // console.log(chain.data);
         currentExpiryOptions = chain.data
           .filter((c: { expiry: string }) => c.expiry === nearestExpiry)
           .reduce(

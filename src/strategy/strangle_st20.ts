@@ -8,11 +8,14 @@ import * as mongoose from 'mongoose';
 import { Tick } from '@src/common/interface/interface';
 import { CronJob } from 'cron'
 import * as moment from 'moment';
+import { AccountsService } from '@src/modules/accounts/accounts.service';
+import { SocketGateway } from '@src/common/gateways/socket/socket.gateway';
 
 const strategyTag = 'STG5';
 
 let zapi: boolean | Zerodha;
 let public_token: any, liveFeed: any;
+let accountsService: AccountsService;
 const masterId = process.env.masterId;
 const ticksCache = {};
 
@@ -69,7 +72,8 @@ async function getAccounts() {
     bufferCommands: false,
     connectTimeoutMS: 30000,
   })
-  const accountsData = await Account.loadAccounts(strategyTag, firstRun);
+  const accountsData = await accountsService.loadAccounts(strategyTag, firstRun);
+  console.log(accountsData);
   accounts = accountsData.accounts;
   account_quantities = accountsData.account_quantities;
   if (firstRun) {
@@ -97,6 +101,7 @@ async function runStrategy() {
 
     // new CronJob('30 * * * * 1-5', getAccounts, null, true, 'Asia/Kolkata');
     setTimeout(() => {
+      console.log(account_quantities, 'accountqu');
       check()
     }, 4000)
     // new CronJob('0 */3 * * * 1-5', check, null, true, 'Asia/Kolkata');
@@ -143,16 +148,16 @@ async function check() {
             instrument_CE = upper_strike;
             instrument_PE = lower_strike;
             currentPosition = true;
-            Account.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_CE, 'SELL');
-            Account.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_PE, 'SELL');
+            accountsService.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_CE, 'SELL');
+            accountsService.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_PE, 'SELL');
             stoploss = Math.round(combine_premium * 1.1);
             trail = 0;
             entry = combine_premium;
           } else {
             console.log('yes current positions')
             if (combine_premium >= stoploss) {
-              Account.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_CE, 'BUY');
-              Account.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_PE, 'BUY');
+              accountsService.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_CE, 'BUY');
+              accountsService.placeAllAccount(strategyTag, account_quantities, running_accounts, instrument_PE, 'BUY');
               currentPosition = false;
             } else {
               const n_trail = (entry - combine_premium);

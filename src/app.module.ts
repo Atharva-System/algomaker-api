@@ -5,11 +5,13 @@ import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import * as mongoose from 'mongoose';
+import { PaperTradeModule } from './modules/papertrade/papertrade.module';
+import { SocketGateway } from './common/gateways/socket/socket.gateway';
 
 @Module({
-  imports: [MongooseModule.forRoot(process.env.db_url), AccountsModule],
+  imports: [MongooseModule.forRoot(process.env.db_url), AccountsModule, PaperTradeModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,SocketGateway],
 })
 export class AppModule implements OnModuleInit {
   async onModuleInit() {

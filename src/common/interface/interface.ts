@@ -67,6 +67,7 @@ export interface NIFTYData {
 export interface AccountPositions {
   orders: any[];
   accountId: any;
+  createdAt: Date;
 }
 
 // interface OptionData {

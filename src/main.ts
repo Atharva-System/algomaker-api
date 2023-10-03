@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 import Zerodha from './common/lib/Zerodha';
 import * as optionsConfig from './common/tools/optionInstruments';
 import KiteTicker from './common/lib/KiteTicker';
-import { AccountPositions, OptionData, Tick } from './common/interface/interface';
+import { OptionData, Tick } from './common/interface/interface';
 import { AccountSchema } from './modules/accounts/accounts.schema';
 import mongoose from 'mongoose';
 import { strategy20 } from './strategy/strangle_st20';
@@ -12,6 +12,13 @@ import * as tulind from 'tulind';
 import { Account } from './modules/accounts/accounts.schema';
 import { AccountsService } from './modules/accounts/accounts.service';
 import async from 'async';
+import { Orderbook } from './modules/orderbook/orderbook.schema';
+import { OrderbookService } from './modules/orderbook/ordebook.service';
+import { PaperTradeService } from './modules/papertrade/papertrade.service';
+import { SocketGateway } from './common/gateways/socket/socket.gateway';
+import { INestApplication } from '@nestjs/common';
+
+// import * as fs from 'fs';
 
 let public_token: string, liveFeed: any, base_account: Account;
 console.log(tulind.version, '------------------');
@@ -48,7 +55,7 @@ async function ticker(underlying: string, subs: number[]) {
   });
 }
 
-function storeTicks(ticks: Tick[]) {
+function storeTicks(ticks: Tick[], socketGateway?: SocketGateway) {
   const ticks2 = ticks.reduce(function (ob, el) {
     ob[el.instrument_token] = el;
     return ob;
@@ -62,29 +69,34 @@ function storeTicks(ticks: Tick[]) {
   // console.log(ticks3);
   //send all ticks3 to frontend , this is for nifty and banknifty ,this logic can be handle on frontend(temporary)
   Object.assign(positionInstruments, ticks3);
+  // console.log(ticks3);
+  setTimeout(() => {
+    // socketGateway.handleTicks(ticks3)
+  }, 4000);
+  // app.io.emit('ticks', ticks3);
+
   // const niftyTicker = positionInstruments['256265'];
   // const bankniftyTicker = positionInstruments['260105'];
   // console.log(`Nifty : ${niftyTicker} BankNifty : ${bankniftyTicker}`);
 }
 
-function sendUpdatePnl() {
+function sendUpdatePnl(orderbookService: OrderbookService, accountsService: AccountsService) {
   console.log("sendUpdatePnl called")
-  // const OrderBook = app.models.orderbook;
-  AccountsService.all_positions(true, function (err, resp) {
-    const currentRejectedOrders = [];
-    const currentCancelledOrders = [];
-    async.eachLimit(resp, 5, function (accountPosition: AccountPositions, cb) {
-      const accountRejectedOrders = accountPosition.orders.filter(c => c.status == 'REJECTED' || c.status == 'Rejected');
-      const accountCancelledOrders = accountPosition.orders.filter(c => c.status == 'CANCELLED' || c.status == 'Cancelled');
+  accountsService.all_positions(true, function (err: any, resp: async.IterableCollection<Orderbook>) {
+    // const currentRejectedOrders = [];
+    // const currentCancelledOrders = [];
+    async.eachLimit(resp, 5, function (accountPosition: Orderbook, cb) {
+      // const accountRejectedOrders = accountPosition.orders.filter(c => c.status == 'REJECTED' || c.status == 'Rejected');
+      // const accountCancelledOrders = accountPosition.orders.filter(c => c.status == 'CANCELLED' || c.status == 'Cancelled');
 
-      accountRejectedOrders.forEach(c => (c.accountId = accountPosition.accountId));
-      accountCancelledOrders.forEach(c => (c.accountId = accountPosition.accountId));
-      currentRejectedOrders.push(...accountRejectedOrders);
-      currentCancelledOrders.push(...accountCancelledOrders);
-      // OrderBook.upsertWithWhere({
-      //   createdAt: accountPosition.createdAt,
-      //   accountId: accountPosition.accountId
-      // }, accountPosition, cb);
+      // accountRejectedOrders.forEach(c => (c.accountId = accountPosition.accountId));
+      // accountCancelledOrders.forEach(c => (c.accountId = accountPosition.accountId));
+      // currentRejectedOrders.push(...accountRejectedOrders);
+      // currentCancelledOrders.push(...accountCancelledOrders);;
+      orderbookService.upsertAccountPosition({
+        createdAt: accountPosition.createdAt,
+        accountId: accountPosition.accountId
+      }, accountPosition);
     }, function () {
       // let msgtext2 = '';
       // let msgtext = '';
@@ -95,7 +107,7 @@ function sendUpdatePnl() {
       //       msgtext2 += `${order.placed_by} - ${order.tag} - ${order.status_message_raw == '17070 : The Price is out of the current execution range' ? 'Option Freeze' : order.status_message}\n`;
       //       cancelledOrders.push(order.order_id);
       //       setTimeout(function () {
-      //         Account.orderFNO(String(order.accountId), {
+      //         AccountsService.orderFNO(String(order.accountId), {
       //           "tradingsymbol": order.tradingsymbol,
       //           "transaction_type": order.transaction_type,
       //           "order_type": "MARKET",
@@ -107,7 +119,7 @@ function sendUpdatePnl() {
       //           console.log(order_resp);
       //         });
       //         setTimeout(() => {
-      //           sendUpdatePnl();
+      //           sendUpdatePnl(orderbookService);
       //         }, 3000);
       //       }, 5000);
       //       cb();
@@ -115,7 +127,8 @@ function sendUpdatePnl() {
       //   })()
       // }, function () {
       //   if (msgtext2.length > 0) {
-      //     notify(msgtext2, 0);
+      //     console.log(msgtext2,'msgtext2 notify');
+      //     // notify(msgtext2, 0);
       //   }
       //   fs.writeFileSync('cancelledOrders.json', JSON.stringify(cancelledOrders));
       // });
@@ -124,7 +137,7 @@ function sendUpdatePnl() {
       //     msgtext += `${order.placed_by} - ${order.tag} - ${order.status_message.indexOf('Insufficient funds') != -1 ? 'Insufficient funds' : order.status_message}\n`;
       //     rejectedOrders.push(order.order_id);
       //     // closePositions(zapi_n, cb2, strategy)
-      //     Account.squareOff(String(order.accountId), {
+      //     AccountsService.squareOff(String(order.accountId), {
       //       accessToken: {
       //         userId: "sysadmin"
       //       }
@@ -160,15 +173,25 @@ function sendUpdatePnl() {
       //   }
       //   fs.writeFileSync('rejectedOrders.json', JSON.stringify(rejectedOrders));
       // });
-      console.log('Positions Saved!');
-      console.log("positions-update", true);
+      // console.log('Positions Saved!');
+      // console.log("positions-update", true);
     });
   });
 }
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.port);
+function sendUpdate(paperTradeService: PaperTradeService) {
+  paperTradeService.positions(function (err: any, resp: any) {
+    console.log('sendUpdate resp(papertrade)', resp)
+    // app.io.emit("paper-update", resp);
+  });
+}
+
+async function startSocket(app: INestApplication) {
+  const orderbookService = app.get(OrderbookService)
+  const accountsService = app.get(AccountsService)
+  const paperTradeService = app.get(PaperTradeService)
+  // const socketGateway = app.get(SocketGateway);
+  // socketGateway.handleMessage('hello++++++++++++++++ticks+++++++++++++=')
   const AccountModel = mongoose.model('account', AccountSchema);
   base_account = await AccountModel.findById(masterId);
   console.log('bootstrap initiated');
@@ -195,18 +218,27 @@ async function bootstrap() {
 
   await ticker('NIFTY', [n_futureToken, ...n_optionTokens, ...n_nextWeekOptionTokens]);
 
-  // setTimeout(() => {
-  //   // sendUpdatePnl();
-  //   // setTimeout(() => {
-  //     strategy20()
-  //   // }, 3000)
-  // }, 3000);
+  setInterval(async () => {
+    try {
+      sendUpdatePnl(orderbookService, accountsService)
+      sendUpdate(paperTradeService)
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  }, 3000);
 
-  [sendUpdatePnl, strategy20, sendUpdatePnl].map(function (fun, index) {
-    setTimeout(fun, 3000 + index * 1000);
-  })
+  setTimeout(() => {
+    // strategy20();
+  }, 3000);
+}
 
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  await app.init();
+  await app.listen(process.env.port);
 
+  startSocket(app)
 
 }
+
 bootstrap();

@@ -10,7 +10,7 @@ const tranches = (number: number, chunkSize: number) => ((new Array(Math.floor(n
 
 @Injectable()
 export class AccountsService {
-  constructor(@InjectModel(Account.name) private accountModel: Model<AccountDocument>) { }
+  constructor(@InjectModel(Account.name) private readonly accountModel: Model<AccountDocument>) { }
 
   async findById(id: string): Promise<Account | null> {
     try {
@@ -27,7 +27,7 @@ export class AccountsService {
   private static strategies = ['AlgoEQ', 'Index', 'Index_Old', 'Bentley', 'RollsRoyce', 'Birbal_AI', 'Casino', 'Tesla', 'TR', 'Pi', 'ITCRT', 'LX1', 'LX2', 'LX3', 'LX4', 'STG3', 'STG4', 'Chai', 'Spider', 'F2', 'ST1', 'BTS', 'BBT', 'BBT5', 'BBTn5', 'iStraddle', 'Strangle', 'mStrangle', 'nStrangle', 'uStrangle', 'LowRisk', 'mLowRisk', 'uLowRisk', 'Joker', 'Math_AI', 'Index', 'Index_Old', 'AlgoEQ', 'Bahubali', 'Birbal_AI', 'Birbal_LMT', 'Casino', 'Tesla', 'Pi', 'ITC', 'ITCRT', 'Chai', 'Spider', 'F2', 'ST1', 'S1', 'BTS', 'BBT', 'BBTn5', 'BBT5', 'Urvashi', 'Strangle', 'mStrangle', 'nStrangle', 'uStrangle', 'LowRisk', 'mLowRisk', 'uLowRisk', 'Joker', 'mStrangleT', 'uStrangleT', 'Strangle40', 'Strangle60', 'ADMIN_SQF', 'SQF', "STG1", "STG2", "STG3", "STG4", "STG5", "STG6", "STG7", "STG8", "STG9", "STG10", "STG11", "STG12", "STG13", "STG14", "STG15", "STG16", "STG17", "STG18", "STG19", "STG20", "STG21", "STG22", "STG23", "MTM_1", "STGL-120", "STGL-160", "Strangle240", 'Strangle2k', 'MB-2k', "MB-N700", "MB-10", "AudiB1", "AudiB2", "AudiB3", "AudiB4", "AudiN1", "AudiN2", "AudiT60", "AudiTT", "AudiTT2", "Banknifty12", "Nifty12", "Ford", "Ford2", "Ford3", 'AudiT80R', 'AudiT120R', 'AudiB80R', 'AudiB120R', 'B5', 'B4', 'T4', 'T3', 'Volvo', 'Volvo2', "TWS", "TWSn", 'V1', 'V2', 'Hedge', 'Super20', 'Honda2k', 'S4', "AudiPC-800", "AudiPS-600"];
   private static allStrategies = Array.from(new Set(AccountsService.strategies));
 
-  static async check(account: Account) {
+  async check(account: Account) {
     try {
       const zapi_n = new Zerodha(account);
       zapi_n.loadConfig(account);
@@ -55,7 +55,7 @@ export class AccountsService {
     }
   }
 
-  static async zerodha_init(account: Account) {
+  async zerodha_init(account: Account) {
     const zapi_n = new Zerodha(account);
     zapi_n.loadConfig(account);
     const login_resp = await zapi_n.login();
@@ -63,7 +63,7 @@ export class AccountsService {
     else return zapi_n;
   }
 
-  static async loadAccounts(strategyTag: string, loginAccounts = false): Promise<{ accounts: any[], account_quantities: Record<string, number>, running_accounts?: any[] }> {
+  async loadAccounts(strategyTag: string, loginAccounts = false): Promise<{ accounts: any[], account_quantities: Record<string, number>, running_accounts?: any[] }> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return new Promise(async (resolve, reject) => {
       const running_accounts = [];
@@ -78,7 +78,7 @@ export class AccountsService {
       const combineTotalLots: number = Object.values<number>(account_quantities).reduce((s, a) => (s += a, s), 0);
       if (loginAccounts) {
         async.eachLimit(accounts, 3, function (account: Account, cb) {
-          AccountsService.zerodha_init(account).then(tmp_zapi => {
+          this.zerodha_init(account).then(tmp_zapi => {
             if (tmp_zapi) running_accounts.push(tmp_zapi);
             cb();
           });
@@ -101,7 +101,7 @@ export class AccountsService {
     })
   }
 
-  static async trackOrder(optionInstrument: any, orderType: string, strategyTag: string, multiplier = 1) {
+  async trackOrder(optionInstrument: any, orderType: string, strategyTag: string, multiplier = 1) {
     console.log("FINALYY IT WORKED (track order)+++++++++$$$$$$$$$$$$$$$$$$$$$$")
     const PaperTradeModel = mongoose.model('paper-trade', PaperTradeSchema);
     PaperTradeModel.create({
@@ -119,7 +119,7 @@ export class AccountsService {
     });
   }
 
-  static async placeOrder(strategyTag: string, tmp_zapi: any, optionInstrument: any, orderType: string, lot_size = 1, mcb: any) {
+  async placeOrder(strategyTag: string, tmp_zapi: any, optionInstrument: any, orderType: string, lot_size = 1, mcb: any) {
     try {
       await tmp_zapi.login();
       console.time('Order' + strategyTag + "_" + tmp_zapi.credentials.user_id);
@@ -158,11 +158,13 @@ export class AccountsService {
     }
   }
 
-  static placeAllAccount(strategyTag: string, account_quantities: object, running_accounts: any[], optionInstrument: any, orderType: string, multiplier = 1) {
+  placeAllAccount(strategyTag: string, account_quantities: object, running_accounts: any[], optionInstrument: any, orderType: string, multiplier = 1) {
     if (optionInstrument && optionInstrument.tradingsymbol) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return new Promise((resolve, reject) => {
-        AccountsService.trackOrder(optionInstrument, orderType, strategyTag, multiplier);
+
+        this.trackOrder(optionInstrument, orderType, strategyTag, multiplier);
+        console.log(running_accounts);
         async.map(running_accounts, function (tmp_zapi, cb) {
           if (account_quantities[tmp_zapi.credentials.user_id]) {
             const orderQuantity = account_quantities[tmp_zapi.credentials.user_id] * multiplier;
@@ -170,11 +172,11 @@ export class AccountsService {
             if (optionInstrument.tradingsymbol.indexOf('BANKNIFTY') == 0) maxQty = 36;
             else if (optionInstrument.tradingsymbol.indexOf('NIFTY') == 0) maxQty = 36;
             if (orderQuantity <= maxQty) {
-              AccountsService.placeOrder(strategyTag, tmp_zapi, optionInstrument, orderType, orderQuantity, cb);
+              this.placeOrder(strategyTag, tmp_zapi, optionInstrument, orderType, orderQuantity, cb);
             } else {
               const orderTranches = tranches(orderQuantity, maxQty);
               async.map(orderTranches, function (orderTranch, cb2) {
-                AccountsService.placeOrder(strategyTag, tmp_zapi, optionInstrument, orderType, orderTranch, cb2);
+                this.placeOrder(strategyTag, tmp_zapi, optionInstrument, orderType, orderTranch, cb2);
               }, cb);
             }
           } else cb();
@@ -193,7 +195,7 @@ export class AccountsService {
     }
   }
 
-  static orderFNO(accountId, orderOpt, cb) {
+  orderFNO(accountId, orderOpt, cb) {
     (async () => {
       console.log(accountId, orderOpt);
       if (accountId && accountId.length == 24) {
@@ -215,7 +217,7 @@ export class AccountsService {
   private static all_position_cache: any[] = [];
   private static lastRefreshTime: number = 0;
 
-  static all_positions(forceRefresh, cb) {
+  all_positions(forceRefresh, cb) {
     const reqTime = Number(moment().format('X'));
     // const strategyData = Account.app.models.strategyData;
     if ((reqTime - AccountsService.lastRefreshTime) > 300 || forceRefresh) {
@@ -288,4 +290,51 @@ export class AccountsService {
       cb(null, AccountsService.all_position_cache);
     }
   };
+
+  // static squareOff(accountId, options, cb) {
+  //   (async () => {
+  //     let Log = Account.app.models.log;
+  //     if (accountId && accountId.length == 24) {
+  //       let zapi_n = new Zerodha();
+  //       let account = await Account.findById(accountId);
+  //       if (account) {
+  //         zapi_n.loadConfig(account);
+  //         let session = await zapi_n.checkSession();
+  //         if (!session) await zapi_n.login();
+  //         closePositions(zapi_n, async function (err, resp) {
+  //           try {
+  //             if (typeof account.bkp_strategy != 'object') account.bkp_strategy = {};
+  //             Object.keys(account.strategy).forEach(s => {
+  //               if (parseInt(account.strategy[s]) > 0) {
+  //                 account.bkp_strategy[s] = parseInt(account.strategy[s]);
+  //                 account.strategy[s] = 0;
+  //               }
+  //             });
+  //           } catch (err) {
+  //             console.log(err);
+  //           }
+  //           await account.save();
+  //           try {
+  //             let logObj = {
+  //               instance: account,
+  //               userId: options.accessToken.userId,
+  //               ts: new Date(),
+  //               updated: "Admin Square off Initiated"
+  //             };
+  //             Log.create(logObj);
+  //           } catch (err) {
+  //             console.log(err);
+  //           }
+  //           cb(null, {
+  //             status: true
+  //           });
+  //         });
+  //       } else cb(null, {
+  //         status: false
+  //       });
+  //     } else cb(null, {
+  //       status: false
+  //     });
+  //   })();
+  // };
 }
