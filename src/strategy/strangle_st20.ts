@@ -3,19 +3,20 @@ import 'dotenv/config';
 import KiteTicker from '../common/lib/KiteTicker';
 import Zerodha from '../common/lib/Zerodha';
 import * as optionsConfig from '../common/tools/optionInstruments';
-import { Account, AccountSchema } from '../modules/accounts/accounts.schema';
+import { Account, AccountSchema, AccountDocument } from '../modules/accounts/accounts.schema';
 import * as mongoose from 'mongoose';
 import { Tick } from '@src/common/interface/interface';
 import { CronJob } from 'cron'
 import * as moment from 'moment';
 import { AccountsService } from '@src/modules/accounts/accounts.service';
-import { SocketGateway } from '@src/common/gateways/socket/socket.gateway';
-
+import { getModelToken } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 const strategyTag = 'STG5';
 
 let zapi: boolean | Zerodha;
 let public_token: any, liveFeed: any;
-let accountsService: AccountsService;
+const accountsService: AccountsService = new AccountsService(getModelToken(Account.name) as unknown as Model<AccountDocument>);
+// let accountsService: AccountsService
 const masterId = process.env.masterId;
 const ticksCache = {};
 
@@ -92,7 +93,6 @@ async function runStrategy() {
     currentExpiryOptions = optionData.weeklyInstruments;
 
     const optionTokens = (Object.values(currentExpiryOptions) as Array<{ instrument_token: number }>).map(c => c.instrument_token);
-    console.log(masterId);
     await getAccounts();
     const AccountModel = mongoose.model('account', AccountSchema);
     const base_acc: Account = await AccountModel.findById(masterId);
