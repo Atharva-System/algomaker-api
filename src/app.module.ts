@@ -7,16 +7,25 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import * as mongoose from 'mongoose';
 import { PaperTradeModule } from './modules/papertrade/papertrade.module';
 import { SocketGateway } from './common/gateways/socket/socket.gateway';
+import { EventEmitter } from 'events'
+import { StrategyPNLModule } from './modules/strategyPNL/strategyPNL.module';
+export const customEvent = new EventEmitter();
 
 @Module({
-  imports: [MongooseModule.forRoot(process.env.db_url), AccountsModule, PaperTradeModule],
+  imports: [
+    MongooseModule.forRoot(process.env.db_url),
+    AccountsModule,
+    PaperTradeModule,
+    StrategyPNLModule
+  ],
   controllers: [AppController],
-  providers: [AppService,SocketGateway],
+  providers: [AppService, SocketGateway],
 })
 export class AppModule implements OnModuleInit {
-  async onModuleInit() {
-    await this.connectToDatabase();
-  }
+
+    onModuleInit() {
+      this.connectToDatabase();
+    }
 
   private async connectToDatabase() {
     try {
@@ -31,3 +40,4 @@ export class AppModule implements OnModuleInit {
     }
   }
 }
+

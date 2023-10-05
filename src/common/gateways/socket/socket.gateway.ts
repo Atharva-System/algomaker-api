@@ -12,14 +12,13 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   onModuleInit() {
-    // This method will be called when the module is initialized
     // Start your WebSocket server here
     console.log('Socket Started')
   }
 
   handleConnection(client: Socket) {
     // Handle connection event
-    console.log('socket connected', client)
+    console.log('socket connected')
   }
 
   handleDisconnect(client: Socket) {
@@ -33,14 +32,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log('Received events:', data);
   }
 
-  @SubscribeMessage('exception')
-  handleException(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    console.log('Received exception:', data);
-  }
+  // sendData(data: object) {
+  //   this.server.emit('ticks', data);
+  // }
 
   @SubscribeMessage('shubham')
   handleTicks(@MessageBody() data: any, @ConnectedSocket() client?: Socket) {
-    console.log(data, 'datatatatatattata+++');
-    this.server.emit('dipen', data);
+    client.emit('dipen', data);
   }
 }

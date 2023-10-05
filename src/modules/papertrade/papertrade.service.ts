@@ -23,11 +23,11 @@ export class PaperTradeService {
       const data = await this.paperTradeModel.find({
         order_timestamp: {
           $gte: today,
-          $lte: todayEnd, 
+          $lte: todayEnd,
         }
       })
       console.log(today, todayEnd)
-      console.log(data, 'from model data')
+      // console.log(data, 'from model data')
       let strategies = [];
       const strategy_paper = {};
       data.forEach((order) => {

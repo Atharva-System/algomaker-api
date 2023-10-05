@@ -77,8 +77,8 @@ export class AccountsService {
       }, {});
       const combineTotalLots: number = Object.values<number>(account_quantities).reduce((s, a) => (s += a, s), 0);
       if (loginAccounts) {
-        async.eachLimit(accounts, 3, function (account: Account, cb) {
-          this.zerodha_init(account).then(tmp_zapi => {
+        async.eachLimit(accounts, 3, async function (account: Account, cb) {
+          await this.zerodha_init(account).then(tmp_zapi => {
             if (tmp_zapi) running_accounts.push(tmp_zapi);
             cb();
           });

@@ -7,5 +7,6 @@ import { PaperTradeService } from './papertrade.service';
   imports: [MongooseModule.forFeature([{ name: PaperTrade.name, schema: PaperTradeSchema }])],
   controllers: [],
   providers: [PaperTradeService],
+  exports: [PaperTradeService],
 })
 export class PaperTradeModule {}
