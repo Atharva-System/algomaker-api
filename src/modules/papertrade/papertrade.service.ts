@@ -1,5 +1,5 @@
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as moment from 'moment'
 import { PaperTrade, PaperTradeDocument } from '../papertrade/papertrade.schema';
@@ -7,6 +7,18 @@ import { PaperTrade, PaperTradeDocument } from '../papertrade/papertrade.schema'
 @Injectable()
 export class PaperTradeService {
   constructor(@InjectModel(PaperTrade.name) private readonly paperTradeModel: Model<PaperTradeDocument>) { }
+
+  async findById(id: string): Promise<PaperTrade | null> {
+    try {
+      const account = await this.paperTradeModel.findById(id).exec();
+      if (!account) {
+        throw new NotFoundException(`Account with ID ${id} not found`);
+      }
+      return account;
+    } catch (error) {
+      throw new NotFoundException(`Account with ID ${id} not found`);
+    }
+  }
 
   async positions(cb, ts?) {
     (async () => {
@@ -59,7 +71,7 @@ export class PaperTradeService {
 
                 strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_quantity"] = order.quantity || null;
                 strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_price"] = order.average_price || null;
-                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_value"] = order.average_price * order.quantity|| null;
+                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_value"] = order.average_price * order.quantity || null;
               } else {
                 if (order.transaction_type == 'SELL') {
                   strategy_positions[strategy][order.tradingsymbol].quantity += -1 * order.quantity;

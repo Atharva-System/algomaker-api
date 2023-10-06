@@ -5,6 +5,7 @@ import { watchCollection } from './common/helperFunc/watchCollection';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors();
   await app.init();
   await app.listen(process.env.port);
   watchCollection(app)
