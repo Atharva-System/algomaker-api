@@ -57,25 +57,28 @@ export class PaperTradeService {
                   "buy_value": 0,
                 };
 
-                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_quantity"] = order.quantity;
-                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_price"] = order.average_price;
-                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_value"] = order.average_price * order.quantity;
+                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_quantity"] = order.quantity || null;
+                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_price"] = order.average_price || null;
+                strategy_positions[strategy][order.tradingsymbol][(order.transaction_type).toLowerCase() + "_value"] = order.average_price * order.quantity|| null;
               } else {
                 if (order.transaction_type == 'SELL') {
                   strategy_positions[strategy][order.tradingsymbol].quantity += -1 * order.quantity;
                   strategy_positions[strategy][order.tradingsymbol].sell_quantity += order.quantity;
-                  strategy_positions[strategy][order.tradingsymbol].sell_value += Math.round(order.quantity * order.average_price);
-                  strategy_positions[strategy][order.tradingsymbol].sell_price = Math.round(strategy_positions[strategy][order.tradingsymbol].sell_value / strategy_positions[strategy][order.tradingsymbol].sell_quantity * 100) / 100;
+                  const sellValue = Math.round(order.quantity * order.average_price) || null
+                  strategy_positions[strategy][order.tradingsymbol].sell_value += sellValue;
+                  strategy_positions[strategy][order.tradingsymbol].sell_price = Math.round(strategy_positions[strategy][order.tradingsymbol].sell_value / strategy_positions[strategy][order.tradingsymbol].sell_quantity * 100) / 100 || null;
+                  console.log(strategy_positions)
                 } else {
                   strategy_positions[strategy][order.tradingsymbol].quantity += order.quantity;
                   strategy_positions[strategy][order.tradingsymbol].buy_quantity += order.quantity;
-                  strategy_positions[strategy][order.tradingsymbol].buy_value += Math.round(order.quantity * order.average_price);
-                  strategy_positions[strategy][order.tradingsymbol].buy_price = Math.round(strategy_positions[strategy][order.tradingsymbol].buy_value / strategy_positions[strategy][order.tradingsymbol].buy_quantity * 100) / 100;
+                  const buyValue = Math.round(order.quantity * order.average_price) || null
+                  strategy_positions[strategy][order.tradingsymbol].buy_value += buyValue;
+                  strategy_positions[strategy][order.tradingsymbol].buy_price = Math.round(strategy_positions[strategy][order.tradingsymbol].buy_value / strategy_positions[strategy][order.tradingsymbol].buy_quantity * 100) / 100 || null;
                 }
               }
 
               if (strategy_positions[strategy][order.tradingsymbol].quantity == 0) {
-                strategy_positions[strategy][order.tradingsymbol].m2m = strategy_positions[strategy][order.tradingsymbol].sell_value - strategy_positions[strategy][order.tradingsymbol].buy_value;
+                strategy_positions[strategy][order.tradingsymbol].m2m = strategy_positions[strategy][order.tradingsymbol].sell_value - strategy_positions[strategy][order.tradingsymbol].buy_value || null;
               }
             }
           });
