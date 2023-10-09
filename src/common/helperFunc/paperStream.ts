@@ -188,17 +188,18 @@ async function sendUpdate(paperTradeService: PaperTradeService, instrument_ltp: 
           accounts[idx].positions.forEach(function (position) {
             if (instrument_ltp[position.instrument_token]) {
               if (position.quantity > 0) {
-                position.m2m = ((position.sell_price * position.sell_quantity) + (Math.abs(position.quantity) * instrument_ltp[position.instrument_token])) - (position.buy_price * position.buy_quantity);
+                position.m2m = (((position.sell_price * position.sell_quantity) + (Math.abs(position.quantity) * instrument_ltp[position.instrument_token])) - (position.buy_price * position.buy_quantity)).toFixed(2);
                 position.ltp = +instrument_ltp[position.instrument_token].toFixed(2);
               } else if (position.quantity < 0) {
-                console.log(instrument_ltp[position.instrument_token]);
-                position.m2m = (position.sell_price * position.sell_quantity) - ((position.buy_price * position.buy_quantity) + (Math.abs(position.quantity) * instrument_ltp[position.instrument_token]));
+                // console.log(instrument_ltp[position.instrument_token]);
+                position.m2m = ((position.sell_price * position.sell_quantity) - ((position.buy_price * position.buy_quantity) + (Math.abs(position.quantity) * instrument_ltp[position.instrument_token]))).toFixed(2);
+                // console.log(position);
                 position.ltp = +instrument_ltp[position.instrument_token].toFixed(2);
               }
             }
-            total_m2m += position.m2m;
+            total_m2m += +position.m2m;
           });
-          accounts[idx].total = +total_m2m.toFixed(2);
+          accounts[idx].total = total_m2m.toFixed(2);
           accounts[idx].totalAbs = Math.abs(accounts[idx].total);
           total_pnl = total_pnl + total_m2m;
           resolve(accounts)
@@ -251,7 +252,7 @@ export async function startSocket(app: INestApplication) {
   setInterval(async () => {
     try {
       sendUpdatePnl(orderbookService, accountsService)
-      sendUpdate(paperTradeService, ticksCacheFrontend)
+      // sendUpdate(paperTradeService, ticksCacheFrontend)
       // initM2Mlogger();
     } catch (error) {
       console.error('Error:', error);

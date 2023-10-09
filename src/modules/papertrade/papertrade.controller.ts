@@ -1,4 +1,4 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { PaperTradeService } from './papertrade.service';
 import { PaperTrade } from './papertrade.schema';
 
@@ -7,21 +7,20 @@ import { PaperTrade } from './papertrade.schema';
 export class PaperTradeController {
   constructor(private readonly paperTradeService: PaperTradeService) { }
   @Get('/positions/:platform/:accountId/:name/:full_name/:ts')
-  
-  async findById(
+
+  async getPositions(
     @Param('platform') platform: string,
     @Param('accountId') accountId: string,
     @Param('name') name: string,
     @Param('full_name') full_name: string,
     @Param('ts') ts: Date,
-  ): Promise<PaperTrade> {
+  ): Promise<PaperTrade | boolean> {
     try {
-      console.log(platform, accountId, name, full_name, ts)
-      const account = await this.paperTradeService.findById('651f992c42db2445de5014ba');
-      console.log('route worked', account)
-      return account;
+      const getPositions = await this.paperTradeService.getPositions(platform, accountId, name, full_name, ts)
+      console.log(getPositions);
+      return true;
     } catch (error) {
-      throw new NotFoundException(`Account with ID ${'651f992c42db2445de5014ba'} not found`);
+      console.log(error)
     }
   }
 }

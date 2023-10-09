@@ -77,7 +77,8 @@ export class AccountsService {
       }, {});
       const combineTotalLots: number = Object.values<number>(account_quantities).reduce((s, a) => (s += a, s), 0);
       if (loginAccounts) {
-        async.eachLimit(accounts, 3, async function (account: Account, cb) {
+        async.eachLimit(accounts, 3, async (account: Account, cb) => {
+          // console.log(this, 'this')
           await this.zerodha_init(account).then(tmp_zapi => {
             if (tmp_zapi) running_accounts.push(tmp_zapi);
             cb();
@@ -164,8 +165,8 @@ export class AccountsService {
       return new Promise((resolve, reject) => {
 
         this.trackOrder(optionInstrument, orderType, strategyTag, multiplier);
-        console.log(running_accounts);
-        async.map(running_accounts, function (tmp_zapi, cb) {
+        // console.log(running_accounts, 'running_accounts');
+        async.map(running_accounts, (tmp_zapi, cb) => {
           if (account_quantities[tmp_zapi.credentials.user_id]) {
             const orderQuantity = account_quantities[tmp_zapi.credentials.user_id] * multiplier;
             let maxQty = 100;
@@ -175,7 +176,7 @@ export class AccountsService {
               this.placeOrder(strategyTag, tmp_zapi, optionInstrument, orderType, orderQuantity, cb);
             } else {
               const orderTranches = tranches(orderQuantity, maxQty);
-              async.map(orderTranches, function (orderTranch, cb2) {
+              async.map(orderTranches, (orderTranch, cb2) => {
                 this.placeOrder(strategyTag, tmp_zapi, optionInstrument, orderType, orderTranch, cb2);
               }, cb);
             }

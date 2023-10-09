@@ -3,20 +3,89 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as moment from 'moment'
 import { PaperTrade, PaperTradeDocument } from '../papertrade/papertrade.schema';
+import { StrategyPNLService } from '../strategyPNL/strategyPNL.service';
 
 @Injectable()
 export class PaperTradeService {
-  constructor(@InjectModel(PaperTrade.name) private readonly paperTradeModel: Model<PaperTradeDocument>) { }
+  constructor(@InjectModel(PaperTrade.name)
+  private readonly paperTradeModel: Model<PaperTradeDocument>,
+    private readonly strategyPNLService: StrategyPNLService,) { }
 
-  async findById(id: string): Promise<PaperTrade | null> {
+  private tradePositions = [];
+  private totalM2M = 0;
+  private showDummyRowsCount = 3;
+  private account_name: string;
+  private full_name: string;
+  private platform: string;
+  private timestamp: Date | any;
+  private positionInstruments = {};
+  private orders = [];
+  private showManageOrder = false;
+  private loadingPositions = false;
+  private loadingOrders = false;
+  private strategyPosition = {};
+  private totalPremium = {};
+  private tradeableSymbols = [];
+  private searchedSymbols = [];
+  private orderList = [];
+  private newOrderFrm = {};
+  private instrumentsLoaded = false;
+  private maxTodayPNL: number;
+  private minTodayPNL: number;
+
+  async fillPositions(resp) {
+    this.tradePositions = resp;
+    this.allPositions = resp;
+    this.loadingPositions = false;
+    // socket = ticker.fn();
+    // connectSocket();
+    updatePositionsPNL(positionInstruments);
+    getDayPNL();
+    calculatePremium(resp);
+  }
+
+  async getPositions(platform, accountId, name, full_name, ts) {
+    let loadingPositions = true;
+    let show_LTP = true;
+    const timestamp = ts
+    const filter = { ts: 0 };
+    if (timestamp && timestamp != 0) {
+      filter.ts = parseInt(timestamp);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      show_LTP = false;
+    }
     try {
-      const account = await this.paperTradeModel.findById(id).exec();
-      if (!account) {
-        throw new NotFoundException(`Account with ID ${id} not found`);
-      }
-      return account;
+      this.positions(filter).then((resp: any) => {
+        fillPositions(Object.values(resp.positions[accountId]));
+        resp.orders[accountId] = resp.orders[accountId].map((order) => {
+          order.order_timestamp = moment(order.order_timestamp).format();
+          return order;
+        });
+        // fillOrders(resp.orders[accountId]);
+        // strategyData = resp.orders[accountId];// i think its redundant but still check it again
+        // checkPaperUpdates();
+        console.log(resp.ts);
+        const todayStart = moment(resp.ts).startOf('day').toDate();
+        const todayEnd = moment(resp.ts).endOf('day').toDate();
+        // if ($rootScope.superadmin) {
+        //   getOHLCGraph();
+        // } else {
+        const params = {
+          accountId: accountId,
+          todayStart: todayStart.toISOString(),
+          todayEnd: todayEnd.toISOString()
+        }
+        this.strategyPNLService.findStrategyPositions(params).then((resp: any) => {
+          console.log(resp, 'startegypnl');
+          // drawChart(resp);
+          const sortedPNL = resp.sort((a, b) => (b.m2m - a.m2m));
+          this.maxTodayPNL = sortedPNL[0].m2m;
+          this.minTodayPNL = sortedPNL[sortedPNL.length - 1].m2m;
+        });
+      });
     } catch (error) {
-      throw new NotFoundException(`Account with ID ${id} not found`);
+      throw new NotFoundException(`Account with ID not found`);
+
     }
   }
 

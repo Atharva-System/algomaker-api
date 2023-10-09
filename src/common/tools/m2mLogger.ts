@@ -89,9 +89,9 @@ async function init() {
   zapi = await zerodha_init(base_acc);
 
   ticker();
-  await saveDayPNL();
+  // await saveDayPNL();
   new CronJob('5,25,45 * * * * 1-5', fetchPositions, null, true, 'Asia/Kolkata');
-  new CronJob('*/10 * * * * 1-5', savePNL, null, true, 'Asia/Kolkata'); //every 10th min
+  new CronJob('*/30 * * * * 1-5', savePNL, null, true, 'Asia/Kolkata'); //every 10th sec
   // savePNL();
 }
 
@@ -201,9 +201,9 @@ async function fetchPositions() {
 }
 
 export function initM2Mlogger() {
-  setInterval(() => {
-    init();
-  }, 5000)
+  // setInterval(() => {
+  init();
+  // }, 5000)
 }
 
 new CronJob('0 15 9 * * 1-5', init, null, true, 'Asia/Kolkata');

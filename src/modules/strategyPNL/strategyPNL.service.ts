@@ -10,4 +10,14 @@ export class StrategyPNLService {
   async create(data) {
     this.strategyPNLModel.create(data);
   }
+
+  async findStrategyPositions(data) {
+    this.strategyPNLModel.find({
+      strategy: data.accountId,
+      ts: {
+        $gte: data.todayStart,
+        $lte: data.todayEnd,
+      },
+    }).select('m2m ts').exec();
+  }
 }
